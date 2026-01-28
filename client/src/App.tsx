@@ -5,6 +5,11 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import SubmitHub from "./pages/SubmitHub";
+import SubmitJob from "./pages/SubmitJob";
+import SubmitEvent from "./pages/SubmitEvent";
+import SubmitResource from "./pages/SubmitResource";
+import SubmitBlog from "./pages/SubmitBlog";
 import Ecosystem from "./pages/Ecosystem";
 import Jobs from "./pages/Jobs";
 import Learning from "./pages/Learning";
@@ -21,7 +26,12 @@ function Router() {
       <Route path={"/learning"} component={Learning} />
       <Route path={"/events"} component={Events} />
       <Route path={"/blog"} component={Blog} />
-      <Route path={"/admin"} component={Admin} />
+         <Route path={"/"} component={Home} />
+      <Route path="/submit/hub" component={SubmitHub} />
+      <Route path="/submit/job" component={SubmitJob} />
+      <Route path="/submit/event" component={SubmitEvent} />
+      <Route path="/submit/resource" component={SubmitResource} />
+      <Route path="/submit/blog" component={SubmitBlog} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

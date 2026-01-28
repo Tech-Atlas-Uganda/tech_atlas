@@ -103,3 +103,16 @@
 - [ ] Create contribution guidelines page
 - [ ] Build about page
 - [ ] Add privacy policy and terms of service pages
+
+## New Feature Request - Submission Forms
+- [x] Create hub submission form with validation
+- [ ] Create community submission form
+- [ ] Create startup submission form
+- [x] Build job posting form with all required fields
+- [ ] Build gig posting form
+- [x] Create event submission form with date pickers
+- [x] Build learning resource submission form
+- [x] Create blog post submission form with Markdown editor
+- [x] Add form validation and error handling
+- [x] Implement success notifications after submission
+- [x] Add routing to submission forms from main pages
