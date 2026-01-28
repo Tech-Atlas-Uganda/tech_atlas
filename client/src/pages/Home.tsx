@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Navigation from "@/components/Navigation";
+
 import { MapPin, Briefcase, BookOpen, Calendar, FileText, Users, TrendingUp, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -59,8 +59,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <div className="min-h-screen flex flex-col">
       
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">

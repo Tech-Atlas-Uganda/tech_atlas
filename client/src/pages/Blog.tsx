@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +57,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
       
       <div className="container py-12">
         {/* Header */}

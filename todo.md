@@ -126,3 +126,14 @@
 - [x] Implement location-based filtering (filter by city/region)
 - [x] Add map/list view toggle
 - [x] Sync map markers with filtered list results
+
+## New Feature Request - Redesign & Enhancements
+- [x] Shift navigation to left sidebar with modern techie design
+- [x] Create Uganda tech ecosystem dashboard page
+- [x] Integrate GitHub API for repository stats (forks, stars, contributors)
+- [x] Fix all submission buttons to navigate to correct forms
+- [x] Enhance admin page with profile management for different entity types
+- [x] Add smooth animations throughout the platform
+- [x] Update color scheme for techie aesthetic
+- [x] Add hover effects and micro-interactions
+- [x] Implement animated page transitions

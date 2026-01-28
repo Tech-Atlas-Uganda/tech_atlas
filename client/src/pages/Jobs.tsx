@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,7 +66,7 @@ export default function Jobs() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
       
       <div className="container py-12">
         {/* Header */}

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -111,7 +110,7 @@ export default function Admin() {
   if (!user || (user.role !== "admin" && user.role !== "moderator")) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <div className="container py-20 text-center">
           <Shield className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
@@ -233,7 +232,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
       
       <div className="container py-12">
         {/* Header */}

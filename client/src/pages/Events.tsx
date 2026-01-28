@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,7 +67,7 @@ export default function Events() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
       
       <div className="container py-12">
         {/* Header */}
@@ -88,7 +87,7 @@ export default function Events() {
               </p>
             </div>
             <Button asChild>
-              <Link href="/events/submit">
+              <Link href="/submit/event">
                 <a className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   Add Event/Opportunity
