@@ -4,6 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { 
   Home, 
   Map, 
+  MapPin,
   Briefcase, 
   GraduationCap, 
   Calendar, 
@@ -12,6 +13,7 @@ import {
   Settings,
   LogOut,
   User,
+  Users,
   Github,
   Menu,
   X
@@ -24,11 +26,13 @@ import { getLoginUrl } from "@/const";
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { href: "/map", label: "Uganda Map", icon: MapPin },
   { href: "/ecosystem", label: "Ecosystem", icon: Map },
   { href: "/jobs", label: "Jobs & Gigs", icon: Briefcase },
   { href: "/learning", label: "Learning", icon: GraduationCap },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/blog", label: "Blog", icon: BookOpen },
+  { href: "/team", label: "Team", icon: Users },
 ];
 
 export default function Sidebar() {
@@ -147,6 +151,18 @@ export default function Sidebar() {
                     <p className="text-xs text-slate-400 truncate">{user.email}</p>
                   </div>
                 </div>
+                <Link href="/profile/settings">
+                  <a>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </Button>
+                  </a>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"

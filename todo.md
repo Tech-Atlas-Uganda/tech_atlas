@@ -137,3 +137,26 @@
 - [x] Update color scheme for techie aesthetic
 - [x] Add hover effects and micro-interactions
 - [x] Implement animated page transitions
+
+## New Feature Request - Enhanced Features
+- [ ] Create dedicated Uganda Map page with interactive regional visualization
+- [ ] Add Uganda Map to sidebar navigation
+- [ ] Implement smooth scroll behavior throughout the platform
+- [ ] Add more page transition animations
+- [ ] Create entrance animations for cards and content
+- [ ] Add parallax effects to hero sections
+- [ ] Build Team/About section showcasing contributors
+- [ ] Create comprehensive Profile Settings page
+- [ ] Add profile customization (avatar, bio, social links, skills)
+- [ ] Implement profile privacy settings
+- [ ] Add notification preferences
+- [ ] Verify Supabase database connection and authentication
+- [ ] Test all CRUD operations with Supabase
+
+## Supabase Migration
+- [ ] Create Supabase schema with all tables
+- [ ] Update database connection to use Supabase client
+- [ ] Migrate db.ts functions to use Supabase queries
+- [ ] Test all CRUD operations with Supabase
+- [ ] Update authentication to use Supabase Auth
+- [ ] Verify data persistence and relationships

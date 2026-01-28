@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import UgandaMap from "./pages/UgandaMap";
 import Ecosystem from "./pages/Ecosystem";
 import Jobs from "./pages/Jobs";
 import Learning from "./pages/Learning";
@@ -18,6 +19,8 @@ import SubmitJob from "./pages/SubmitJob";
 import SubmitEvent from "./pages/SubmitEvent";
 import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
+import ProfileSettings from "./pages/ProfileSettings";
+import Team from "./pages/Team";
 
 function Router() {
   return (
@@ -27,6 +30,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/map" component={UgandaMap} />
           <Route path="/ecosystem" component={Ecosystem} />
           <Route path="/jobs" component={Jobs} />
           <Route path="/learning" component={Learning} />
@@ -38,6 +42,8 @@ function Router() {
           <Route path="/submit/event" component={SubmitEvent} />
           <Route path="/submit/resource" component={SubmitResource} />
           <Route path="/submit/blog" component={SubmitBlog} />
+          <Route path="/profile/settings" component={ProfileSettings} />
+          <Route path="/team" component={Team} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
