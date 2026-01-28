@@ -152,16 +152,14 @@ export default function Sidebar() {
                   </div>
                 </div>
                 <Link href="/profile/settings">
-                  <a>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800/50"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Button>
-                  </a>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
                 </Link>
                 <Button
                   variant="ghost"

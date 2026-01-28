@@ -160,3 +160,11 @@
 - [ ] Test all CRUD operations with Supabase
 - [ ] Update authentication to use Supabase Auth
 - [ ] Verify data persistence and relationships
+
+## Bug Fixes
+- [x] Fix missing admin.getPendingContent tRPC procedure (already existed, needed server restart)
+- [x] Fix missing admin.getStats tRPC procedure (already existed, needed server restart)
+- [x] Fix missing blog.list tRPC procedure (already existed, needed server restart)
+- [x] Fix missing hubs.list, communities.list, startups.list procedures (already existed, needed server restart)
+- [x] Fix nested anchor tags in Sidebar Settings link
+- [x] Fix useEffect infinite loop in UgandaMap component

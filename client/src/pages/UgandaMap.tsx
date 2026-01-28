@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,15 +28,18 @@ export default function UgandaMap() {
   const { data: communities } = trpc.communities.list.useQuery({ status: "approved" });
   const { data: startups } = trpc.startups.list.useQuery({ status: "approved" });
 
-  const allEntities = [
+  const allEntities = useMemo(() => [
     ...(hubs || []).map(h => ({ ...h, type: "hub", color: "#3b82f6" })),
     ...(communities || []).map(c => ({ ...c, type: "community", color: "#8b5cf6" })),
     ...(startups || []).map(s => ({ ...s, type: "startup", color: "#ec4899" })),
-  ];
+  ], [hubs, communities, startups]);
 
-  const filteredEntities = selectedRegion
-    ? allEntities.filter(e => e.location?.toLowerCase().includes(selectedRegion.toLowerCase()))
-    : allEntities;
+  const filteredEntities = useMemo(() => 
+    selectedRegion
+      ? allEntities.filter(e => e.location?.toLowerCase().includes(selectedRegion.toLowerCase()))
+      : allEntities,
+    [allEntities, selectedRegion]
+  );
 
   const handleMapReady = (map: google.maps.Map) => {
     mapRef.current = map;
@@ -104,8 +107,9 @@ export default function UgandaMap() {
       );
     });
 
-    setMarkers(newMarkers);
-  }, [mapServices, filteredEntities]);
+    // Don't call setMarkers here to avoid infinite loop
+    // Markers are added directly to the map
+  }, [mapServices, filteredEntities, markers]);
 
   const handleRegionClick = (regionName: string) => {
     if (selectedRegion === regionName) {
