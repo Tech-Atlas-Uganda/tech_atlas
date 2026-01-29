@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import UgandaMap from "./pages/UgandaMap";
@@ -34,7 +35,7 @@ function Router() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="flex-1 md:ml-64">
+      <main className="flex-1 md:ml-64 flex flex-col">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
@@ -63,6 +64,7 @@ function Router() {
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
+        <Footer />
       </main>
     </div>
   );

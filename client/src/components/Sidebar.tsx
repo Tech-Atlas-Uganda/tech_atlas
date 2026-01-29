@@ -71,9 +71,7 @@ export default function Sidebar() {
           <div className="p-6 border-b border-slate-800/50">
             <Link href="/">
               <a className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
-                  <Github className="h-5 w-5 text-white" />
-                </div>
+                <img src="/logo.png" alt="Tech Atlas" className="w-10 h-10 rounded-lg shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow" />
                 <div>
                   <h1 className="text-xl font-bold text-white font-['Space_Grotesk']">Tech Atlas</h1>
                   <p className="text-xs text-slate-400">Uganda Ecosystem</p>
