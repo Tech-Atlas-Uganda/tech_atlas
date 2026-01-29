@@ -168,3 +168,58 @@
 - [x] Fix missing hubs.list, communities.list, startups.list procedures (already existed, needed server restart)
 - [x] Fix nested anchor tags in Sidebar Settings link
 - [x] Fix useEffect infinite loop in UgandaMap component
+
+## New Feature Requests - Major Enhancements
+
+### Legal and Governance Pages
+- [x] Create Contribute page with GitHub and platform guidelines
+- [x] Create Governance page explaining decision-making process
+- [x] Create About page with mission and vision
+- [ ] Create Legal page with terms overview
+- [x] Create Privacy Policy page
+- [x] Create Terms of Service page
+- [x] Create Code of Conduct page
+- [x] Add disclaimer about due diligence for hiring and external links
+
+### User Profile Showcase
+- [x] Create user profile showcase page with expertise cards
+- [x] Add profile creation form with X, LinkedIn, GitHub, portfolio links
+- [x] Design modern techie profile cards with cool aesthetics
+- [x] Add skills and expertise tagging system
+- [x] Make profiles publicly browsable
+- [x] Add profile search and filtering
+
+### Community Forum
+- [ ] Create forum database schema (discussions, replies, categories)
+- [ ] Build forum listing page with categories
+- [ ] Create discussion detail page with replies
+- [ ] Add ability to create new discussions
+- [ ] Implement reply functionality
+- [ ] Add forum moderation tools
+
+### Detail Modals and Popups
+- [ ] Create modal component for hub details
+- [ ] Create modal component for startup details
+- [ ] Create modal component for event details
+- [ ] Create modal component for opportunity details
+- [ ] Add external links and full descriptions to modals
+- [ ] Implement click handlers on all listing cards
+
+### Moderator Management
+- [ ] Add moderator role to user schema
+- [ ] Create moderator management page for super admin
+- [ ] Add ability to assign/remove moderator role
+- [ ] Restrict admin panel visibility to admin/moderator only
+- [ ] Update approval workflows for moderators
+
+### UI Enhancements
+- [ ] Generate custom logo for Tech Atlas
+- [ ] Create favicon from logo
+- [ ] Add collapsible navigation toggle
+- [ ] Implement navigation hide/show functionality
+- [x] Create support/donate page
+
+### Authentication
+- [ ] Enable user signup functionality
+- [ ] Add signup form/page
+- [ ] Update auth flow to support new users

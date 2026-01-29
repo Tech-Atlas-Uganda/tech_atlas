@@ -28,6 +28,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/map", label: "Uganda Map", icon: MapPin },
   { href: "/ecosystem", label: "Ecosystem", icon: Map },
+  { href: "/profiles", label: "Talent Directory", icon: User },
   { href: "/jobs", label: "Jobs & Gigs", icon: Briefcase },
   { href: "/learning", label: "Learning", icon: GraduationCap },
   { href: "/events", label: "Events", icon: Calendar },

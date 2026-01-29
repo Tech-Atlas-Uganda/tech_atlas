@@ -709,6 +709,13 @@ export const appRouter = router({
       }),
   }),
 
+  // Public profiles directory
+  profiles: router({
+    list: publicProcedure.query(async () => {
+      return await db.getAllUsers();
+    }),
+  }),
+
   // Admin functions
   admin: router({
     getPendingContent: adminProcedure.query(async () => {

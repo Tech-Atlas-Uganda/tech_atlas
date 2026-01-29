@@ -671,3 +671,12 @@ export async function getContentStats() {
     blogPosts: blogPostsCount[0]?.count || 0,
   };
 }
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(users);
+  return result;
+}
+

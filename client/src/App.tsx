@@ -21,6 +21,14 @@ import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
 import ProfileSettings from "./pages/ProfileSettings";
 import Team from "./pages/Team";
+import Profiles from "./pages/Profiles";
+import Contribute from "./pages/Contribute";
+import Governance from "./pages/Governance";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import CodeOfConduct from "./pages/CodeOfConduct";
+import Support from "./pages/Support";
 
 function Router() {
   return (
@@ -44,6 +52,14 @@ function Router() {
           <Route path="/submit/blog" component={SubmitBlog} />
           <Route path="/profile/settings" component={ProfileSettings} />
           <Route path="/team" component={Team} />
+          <Route path="/profiles" component={Profiles} />
+          <Route path="/contribute" component={Contribute} />
+          <Route path="/governance" component={Governance} />
+          <Route path="/about" component={About} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/code-of-conduct" component={CodeOfConduct} />
+          <Route path="/support" component={Support} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
