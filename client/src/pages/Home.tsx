@@ -1,9 +1,30 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { useCounter } from "@/hooks/useCounter";
 import { MapPin, Briefcase, BookOpen, Calendar, FileText, Users, TrendingUp, Globe } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+
+function StatCard({ stat, index, isInView }: { stat: any; index: number; isInView: boolean }) {
+  const Icon = stat.icon;
+  const count = useCounter({ end: stat.value, duration: 2000, enabled: isInView });
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      className="text-center space-y-2"
+    >
+      <Icon className="h-8 w-8 mx-auto text-primary" />
+      <div className="text-3xl md:text-4xl font-bold text-foreground">
+        {count}{stat.suffix}
+      </div>
+      <div className="text-sm text-muted-foreground">{stat.label}</div>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const features = [
@@ -52,11 +73,14 @@ export default function Home() {
   ];
 
   const stats = [
-    { icon: Users, label: "Communities", value: "50+" },
-    { icon: Briefcase, label: "Active Jobs", value: "200+" },
-    { icon: Calendar, label: "Events/Month", value: "30+" },
-    { icon: TrendingUp, label: "Growth Rate", value: "40%" },
+    { icon: Users, label: "Communities", value: 50, suffix: "+" },
+    { icon: Briefcase, label: "Active Jobs", value: 200, suffix: "+" },
+    { icon: Calendar, label: "Events/Month", value: 30, suffix: "+" },
+    { icon: TrendingUp, label: "Growth Rate", value: 40, suffix: "%" },
   ];
+
+  const statsRef = useRef(null);
+  const isInView = useInView(statsRef, { once: true, margin: "-100px" });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -104,23 +128,18 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 border-y border-border/40 bg-muted/30">
+      <section ref={statsRef} className="py-12 border-y border-border/40 bg-muted/30">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <motion.div
+                <StatCard 
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="text-center space-y-2"
-                >
-                  <Icon className="h-8 w-8 mx-auto text-primary" />
-                  <div className="text-3xl md:text-4xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </motion.div>
+                  stat={stat}
+                  index={index}
+                  isInView={isInView}
+                />
               );
             })}
           </div>
