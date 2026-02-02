@@ -716,6 +716,92 @@ export const appRouter = router({
     }),
   }),
 
+  // Community forum
+  forum: router({
+    listThreads: publicProcedure
+      .input(z.object({ category: z.string().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getAllForumThreads(input?.category);
+      }),
+    
+    getThread: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getForumThreadBySlug(input.slug);
+      }),
+    
+    createThread: publicProcedure
+      .input(z.object({
+        title: z.string().min(5).max(500),
+        content: z.string().min(10),
+        category: z.enum(["general", "jobs", "events", "help", "showcase", "feedback"]),
+        authorName: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const slug = generateSlug(input.title) + '-' + Date.now();
+        const thread = await db.createForumThread({
+          ...input,
+          slug,
+          authorId: ctx.user?.id || null,
+          authorName: input.authorName || ctx.user?.name || 'Anonymous',
+        });
+        return thread;
+      }),
+    
+    getReplies: publicProcedure
+      .input(z.object({ threadId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getForumRepliesByThreadId(input.threadId);
+      }),
+    
+    createReply: publicProcedure
+      .input(z.object({
+        threadId: z.number(),
+        content: z.string().min(1),
+        parentReplyId: z.number().optional(),
+        authorName: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const reply = await db.createForumReply({
+          ...input,
+          authorId: ctx.user?.id || null,
+          authorName: input.authorName || ctx.user?.name || 'Anonymous',
+          parentReplyId: input.parentReplyId || null,
+        });
+        return reply;
+      }),
+    
+    vote: protectedProcedure
+      .input(z.object({
+        targetType: z.enum(["thread", "reply"]),
+        targetId: z.number(),
+        voteType: z.enum(["up", "down"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.voteOnForumContent({
+          ...input,
+          userId: ctx.user.id,
+        });
+      }),
+    
+    updateThread: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        isPinned: z.boolean().optional(),
+        isLocked: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...updates } = input;
+        return await db.updateForumThread(id, updates);
+      }),
+    
+    deleteThread: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteForumThread(input.id);
+      }),
+  }),
+
   // Admin functions
   admin: router({
     getPendingContent: adminProcedure.query(async () => {

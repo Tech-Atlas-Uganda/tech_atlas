@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Github, Linkedin, Twitter, Mail, Heart, Code, Users, Target } from "lucide-react";
+import { Github, Linkedin, Twitter, Mail, Heart, Code, Users, Target, Shield } from "lucide-react";
 
 const teamMembers = [
   {
@@ -10,6 +10,33 @@ const teamMembers = [
     role: "Core Contributors",
     bio: "Building Uganda's open-source tech ecosystem platform",
     avatar: "",
+    github: "https://github.com",
+    linkedin: "",
+    twitter: "",
+  },
+];
+
+const moderators = [
+  {
+    name: "Community Moderator 1",
+    role: "Content Moderator",
+    bio: "Ensuring quality and authenticity of ecosystem submissions",
+    github: "https://github.com",
+    linkedin: "",
+    twitter: "",
+  },
+  {
+    name: "Community Moderator 2",
+    role: "Forum Moderator",
+    bio: "Maintaining healthy discussions and community guidelines",
+    github: "https://github.com",
+    linkedin: "",
+    twitter: "",
+  },
+  {
+    name: "Community Moderator 3",
+    role: "Events Curator",
+    bio: "Curating and verifying tech events and opportunities",
     github: "https://github.com",
     linkedin: "",
     twitter: "",
@@ -120,11 +147,77 @@ export default function Team() {
           </div>
         </motion.div>
 
+        {/* Moderators Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-16"
+        >
+          <h2 className="text-3xl font-bold text-foreground mb-4 text-center font-['Space_Grotesk']">
+            Community Moderators
+          </h2>
+          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Our trusted moderators help maintain the quality and integrity of Tech Atlas, 
+            ensuring all content meets community standards.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {moderators.map((moderator, index) => (
+              <motion.div
+                key={moderator.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.4 + index * 0.05 }}
+              >
+                <Card className="h-full hover:shadow-lg transition-all hover:-translate-y-1">
+                  <CardHeader className="text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 mx-auto mb-4 flex items-center justify-center">
+                      <Shield className="h-10 w-10 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">{moderator.name}</CardTitle>
+                    <CardDescription>
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400">
+                        {moderator.role}
+                      </Badge>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-sm text-muted-foreground mb-4">{moderator.bio}</p>
+                    <div className="flex justify-center gap-2">
+                      {moderator.github && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={moderator.github} target="_blank" rel="noopener noreferrer">
+                            <Github className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {moderator.linkedin && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={moderator.linkedin} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {moderator.twitter && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={moderator.twitter} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Team Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
           className="mb-16"
         >
           <h2 className="text-3xl font-bold text-foreground mb-8 text-center font-['Space_Grotesk']">

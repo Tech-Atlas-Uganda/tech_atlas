@@ -40,6 +40,7 @@ export default function Sidebar() {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const logoutMutation = trpc.auth.logout.useMutation();
 
   const handleLogout = async () => {
@@ -54,6 +55,16 @@ export default function Sidebar() {
         variant="ghost"
         size="icon"
         className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+      >
+        {!isMobileOpen ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+      </Button>
+
+      {/* Desktop Toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden md:block fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -63,7 +74,11 @@ export default function Sidebar() {
       <AnimatePresence>
         <motion.aside
           initial={{ x: -280 }}
-          animate={{ x: isCollapsed ? -280 : 0 }}
+          animate={{ 
+            x: (typeof window !== 'undefined' && window.innerWidth < 768) 
+              ? (isMobileOpen ? 0 : -280) 
+              : (isCollapsed ? -280 : 0)
+          }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-r border-slate-800/50 z-40 flex flex-col overflow-hidden"
         >

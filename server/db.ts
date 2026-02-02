@@ -8,6 +8,9 @@ import {
   jobs, InsertJob, Job,
   gigs, InsertGig, Gig,
   learningResources, InsertLearningResource, LearningResource,
+  forumThreads, InsertForumThread, ForumThread,
+  forumReplies, InsertForumReply, ForumReply,
+  forumVotes, InsertForumVote, ForumVote,
   events, InsertEvent, Event,
   opportunities, InsertOpportunity, Opportunity,
   blogPosts, InsertBlogPost, BlogPost
@@ -680,3 +683,122 @@ export async function getAllUsers() {
   return result;
 }
 
+
+
+// ===== Forum Functions =====
+
+export async function getAllForumThreads(category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (category) {
+    const result = await db.select().from(forumThreads)
+      .where(eq(forumThreads.category, category as any))
+      .orderBy(desc(forumThreads.lastActivityAt));
+    return result;
+  }
+  
+  const result = await db.select().from(forumThreads).orderBy(desc(forumThreads.lastActivityAt));
+  return result;
+}
+
+export async function getForumThreadBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(forumThreads).where(eq(forumThreads.slug, slug)).limit(1);
+  return result[0];
+}
+
+export async function createForumThread(thread: InsertForumThread) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(forumThreads).values(thread);
+  return getForumThreadBySlug(thread.slug);
+}
+
+export async function updateForumThread(id: number, updates: Partial<InsertForumThread>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(forumThreads).set(updates).where(eq(forumThreads.id, id));
+  return { success: true };
+}
+
+export async function deleteForumThread(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(forumThreads).where(eq(forumThreads.id, id));
+  return { success: true };
+}
+
+export async function getForumRepliesByThreadId(threadId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select().from(forumReplies).where(eq(forumReplies.threadId, threadId)).orderBy(asc(forumReplies.createdAt));
+  return result;
+}
+
+export async function createForumReply(reply: InsertForumReply) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(forumReplies).values(reply);
+  
+  // Update thread reply count and last activity
+  await db.update(forumThreads)
+    .set({ 
+      replyCount: sql`${forumThreads.replyCount} + 1`,
+      lastActivityAt: new Date()
+    })
+    .where(eq(forumThreads.id, reply.threadId));
+  
+  const result = await db.select().from(forumReplies).where(eq(forumReplies.threadId, reply.threadId)).orderBy(desc(forumReplies.id)).limit(1);
+  return result[0];
+}
+
+export async function voteOnForumContent(vote: InsertForumVote) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if user already voted
+  const existing = await db.select().from(forumVotes)
+    .where(
+      and(
+        eq(forumVotes.userId, vote.userId),
+        eq(forumVotes.targetType, vote.targetType),
+        eq(forumVotes.targetId, vote.targetId)
+      )
+    ).limit(1);
+
+  if (existing.length > 0) {
+    // Update existing vote
+    await db.update(forumVotes).set({ voteType: vote.voteType }).where(eq(forumVotes.id, existing[0].id));
+  } else {
+    // Create new vote
+    await db.insert(forumVotes).values(vote);
+  }
+
+  // Update vote counts
+  const votes = await db.select().from(forumVotes)
+    .where(
+      and(
+        eq(forumVotes.targetType, vote.targetType),
+        eq(forumVotes.targetId, vote.targetId)
+      )
+    );
+
+  const upvotes = votes.filter(v => v.voteType === "up").length;
+  const downvotes = votes.filter(v => v.voteType === "down").length;
+
+  if (vote.targetType === "thread") {
+    await db.update(forumThreads).set({ upvotes, downvotes }).where(eq(forumThreads.id, vote.targetId));
+  } else {
+    await db.update(forumReplies).set({ upvotes, downvotes }).where(eq(forumReplies.id, vote.targetId));
+  }
+
+  return { success: true, upvotes, downvotes };
+}

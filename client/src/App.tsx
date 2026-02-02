@@ -30,6 +30,9 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CodeOfConduct from "./pages/CodeOfConduct";
 import Support from "./pages/Support";
+import Forum from "./pages/Forum";
+import NewThread from "./pages/NewThread";
+import ThreadDetail from "./pages/ThreadDetail";
 
 function Router() {
   return (
@@ -61,6 +64,9 @@ function Router() {
           <Route path="/terms" component={Terms} />
           <Route path="/code-of-conduct" component={CodeOfConduct} />
           <Route path="/support" component={Support} />
+          <Route path="/forum" component={Forum} />
+          <Route path="/forum/new" component={NewThread} />
+          <Route path="/forum/:slug" component={ThreadDetail} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

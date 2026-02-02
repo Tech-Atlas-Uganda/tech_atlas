@@ -299,3 +299,62 @@ export const blogPosts = mysqlTable("blog_posts", {
 
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+/**
+ * Forum threads for community discussions
+ */
+export const forumThreads = mysqlTable("forum_threads", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 500 }).notNull(),
+  slug: varchar("slug", { length: 500 }).notNull().unique(),
+  content: text("content").notNull(),
+  category: mysqlEnum("category", ["general", "jobs", "events", "help", "showcase", "feedback"]).default("general").notNull(),
+  authorId: int("authorId"), // Nullable for anonymous posts
+  authorName: varchar("authorName", { length: 255 }), // For anonymous posts
+  isPinned: boolean("isPinned").default(false).notNull(),
+  isLocked: boolean("isLocked").default(false).notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  replyCount: int("replyCount").default(0).notNull(),
+  upvotes: int("upvotes").default(0).notNull(),
+  downvotes: int("downvotes").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastActivityAt: timestamp("lastActivityAt").defaultNow().notNull(),
+});
+
+export type ForumThread = typeof forumThreads.$inferSelect;
+export type InsertForumThread = typeof forumThreads.$inferInsert;
+
+/**
+ * Replies to forum threads
+ */
+export const forumReplies = mysqlTable("forum_replies", {
+  id: int("id").autoincrement().primaryKey(),
+  threadId: int("threadId").notNull(),
+  content: text("content").notNull(),
+  authorId: int("authorId"), // Nullable for anonymous replies
+  authorName: varchar("authorName", { length: 255 }), // For anonymous replies
+  parentReplyId: int("parentReplyId"), // For nested replies
+  upvotes: int("upvotes").default(0).notNull(),
+  downvotes: int("downvotes").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ForumReply = typeof forumReplies.$inferSelect;
+export type InsertForumReply = typeof forumReplies.$inferInsert;
+
+/**
+ * Votes on forum threads and replies
+ */
+export const forumVotes = mysqlTable("forum_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  targetType: mysqlEnum("targetType", ["thread", "reply"]).notNull(),
+  targetId: int("targetId").notNull(),
+  voteType: mysqlEnum("voteType", ["up", "down"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ForumVote = typeof forumVotes.$inferSelect;
+export type InsertForumVote = typeof forumVotes.$inferInsert;

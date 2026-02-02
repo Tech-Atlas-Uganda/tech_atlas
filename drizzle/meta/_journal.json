@@ -15,6 +15,13 @@
       "when": 1769629517757,
       "tag": "0001_tan_azazel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770023476920,
+      "tag": "0002_handy_orphan",
+      "breakpoints": true
     }
   ]
 }

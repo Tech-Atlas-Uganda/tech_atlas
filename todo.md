@@ -229,3 +229,16 @@
 - [x] Add counter animation to homepage statistics section
 - [x] Implement smooth easing animation
 - [x] Trigger animation when stats section comes into view
+
+## New Feature Request - Community Forum & Documentation
+- [x] Create forum database schema (threads, replies, votes)
+- [x] Add forum tRPC routers for CRUD operations
+- [x] Build forum listing page with categories
+- [x] Create thread detail page with replies and comments
+- [x] Add thread creation form (authenticated and anonymous)
+- [x] Implement reply and comment functionality
+- [x] Add upvote/downvote system for threads and replies
+- [x] Add moderators showcase section to Team page (3 moderators)
+- [x] Fix collapsible sidebar menu functionality
+- [x] Create comprehensive README.md with setup instructions
+- [x] Create CONTRIBUTING.md with contribution guidelines
