@@ -244,27 +244,27 @@ export default function Home() {
             <div className="space-y-4">
               <h4 className="font-semibold">Platform</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/ecosystem"><a className="hover:text-foreground transition-smooth">Ecosystem</a></Link></li>
-                <li><Link href="/jobs"><a className="hover:text-foreground transition-smooth">Jobs & Gigs</a></Link></li>
-                <li><Link href="/learning"><a className="hover:text-foreground transition-smooth">Learning</a></Link></li>
-                <li><Link href="/events"><a className="hover:text-foreground transition-smooth">Events</a></Link></li>
+                <li><Link href="/ecosystem" className="hover:text-foreground transition-smooth">Ecosystem</Link></li>
+                <li><Link href="/jobs" className="hover:text-foreground transition-smooth">Jobs & Gigs</Link></li>
+                <li><Link href="/learning" className="hover:text-foreground transition-smooth">Learning</Link></li>
+                <li><Link href="/events" className="hover:text-foreground transition-smooth">Events</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
               <h4 className="font-semibold">Community</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/blog"><a className="hover:text-foreground transition-smooth">Blog</a></Link></li>
-                <li><Link href="/contribute"><a className="hover:text-foreground transition-smooth">Contribute</a></Link></li>
-                <li><Link href="/governance"><a className="hover:text-foreground transition-smooth">Governance</a></Link></li>
-                <li><Link href="/about"><a className="hover:text-foreground transition-smooth">About</a></Link></li>
+                <li><Link href="/blog" className="hover:text-foreground transition-smooth">Blog</Link></li>
+                <li><Link href="/contribute" className="hover:text-foreground transition-smooth">Contribute</Link></li>
+                <li><Link href="/governance" className="hover:text-foreground transition-smooth">Governance</Link></li>
+                <li><Link href="/about" className="hover:text-foreground transition-smooth">About</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
               <h4 className="font-semibold">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/privacy"><a className="hover:text-foreground transition-smooth">Privacy Policy</a></Link></li>
-                <li><Link href="/terms"><a className="hover:text-foreground transition-smooth">Terms of Service</a></Link></li>
-                <li><Link href="/code-of-conduct"><a className="hover:text-foreground transition-smooth">Code of Conduct</a></Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition-smooth">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground transition-smooth">Terms of Service</Link></li>
+                <li><Link href="/code-of-conduct" className="hover:text-foreground transition-smooth">Code of Conduct</Link></li>
               </ul>
             </div>
           </div>
