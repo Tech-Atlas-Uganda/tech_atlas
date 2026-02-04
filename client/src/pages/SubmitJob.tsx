@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Briefcase } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { useAuth } from "@/contexts/AuthContext";
+import { CORE_CATEGORIES } from "../../../shared/const";
 
 export default function SubmitJob() {
   const [, setLocation] = useLocation();
@@ -23,6 +23,7 @@ export default function SubmitJob() {
     requirements: "",
     responsibilities: "",
     type: "full-time" as "full-time" | "part-time" | "internship" | "contract",
+    category: "",
     location: "",
     remote: false,
     skills: "",
@@ -32,6 +33,10 @@ export default function SubmitJob() {
     currency: "UGX",
     applicationUrl: "",
     applicationEmail: "",
+    companyWebsite: "",
+    latitude: "",
+    longitude: "",
+    submitterName: "", // For anonymous submissions
   });
 
   const createJob = trpc.jobs.create.useMutation({
@@ -59,6 +64,7 @@ export default function SubmitJob() {
       requirements: formData.requirements || undefined,
       responsibilities: formData.responsibilities || undefined,
       type: formData.type,
+      category: formData.category || undefined,
       location: formData.location || undefined,
       remote: formData.remote,
       skills: formData.skills ? formData.skills.split(",").map(s => s.trim()) : undefined,
@@ -68,6 +74,8 @@ export default function SubmitJob() {
       currency: formData.currency || undefined,
       applicationUrl: formData.applicationUrl || undefined,
       applicationEmail: formData.applicationEmail || undefined,
+      companyWebsite: formData.companyWebsite || undefined,
+      submitterName: formData.submitterName || undefined,
     });
   };
 
@@ -75,27 +83,6 @@ export default function SubmitJob() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>You need to be logged in to post a job.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={() => window.location.href = getLoginUrl()} className="w-full">
-              Sign In to Continue
-            </Button>
-            <Button variant="outline" onClick={() => setLocation("/")} className="w-full">
-              Back to Home
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -202,12 +189,39 @@ export default function SubmitJob() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CORE_CATEGORIES.map((cat: string) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Kampala"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="companyWebsite">Company Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    type="url"
+                    value={formData.companyWebsite}
+                    onChange={(e) => setFormData({ ...formData, companyWebsite: e.target.value })}
+                    placeholder="https://company.com"
                   />
                 </div>
               </div>
@@ -302,6 +316,22 @@ export default function SubmitJob() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="submitterName">Your Name (Optional)</Label>
+                <Input
+                  id="submitterName"
+                  value={formData.submitterName}
+                  onChange={(e) => setFormData({ ...formData, submitterName: e.target.value })}
+                  placeholder="Enter your name to be credited as the submitter"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isAuthenticated 
+                    ? "Leave blank to use your account name, or enter a different name" 
+                    : "Optional: Enter your name to be credited for this submission"
+                  }
+                </p>
+              </div>
+
               <div className="flex gap-4 pt-4">
                 <Button
                   type="submit"
@@ -319,9 +349,12 @@ export default function SubmitJob() {
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground text-center">
-                Your job posting will be reviewed by our moderation team before appearing on the platform.
-              </p>
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
+                <p className="text-blue-700 dark:text-blue-300">
+                  <strong>Anonymous Submissions Welcome:</strong> You can post jobs without creating an account. 
+                  All submissions are reviewed by our moderation team before publication to ensure quality and relevance.
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>

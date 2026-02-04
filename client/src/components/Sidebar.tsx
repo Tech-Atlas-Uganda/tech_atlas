@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthDialog } from "@/components/AuthDialog";
 import { 
   Home, 
   Map, 
@@ -14,78 +15,79 @@ import {
   LogOut,
   User,
   Users,
-  Github,
   Menu,
   X
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/map", label: "Uganda Map", icon: MapPin },
   { href: "/ecosystem", label: "Ecosystem", icon: Map },
-  { href: "/profiles", label: "Talent Directory", icon: User },
+  { href: "/profiles", label: "People", icon: Users },
   { href: "/jobs", label: "Jobs & Gigs", icon: Briefcase },
   { href: "/learning", label: "Learning", icon: GraduationCap },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/blog", label: "Blog", icon: BookOpen },
-  { href: "/team", label: "Team", icon: Users },
+  { href: "/forum", label: "Forum", icon: Users },
 ];
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, isAuthenticated, signOut } = useAuth();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const logoutMutation = trpc.auth.logout.useMutation();
 
   const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
-    logout();
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
     <>
-      {/* Mobile Toggle */}
+      {/* Mobile Menu Button */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm"
+        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm border"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
-        {!isMobileOpen ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Desktop Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="hidden md:block fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-      </Button>
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <AnimatePresence>
-        <motion.aside
-          initial={{ x: -280 }}
-          animate={{ 
-            x: (typeof window !== 'undefined' && window.innerWidth < 768) 
-              ? (isMobileOpen ? 0 : -280) 
-              : (isCollapsed ? -280 : 0)
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-r border-slate-800/50 z-40 flex flex-col overflow-hidden"
-        >
+      <motion.aside
+        initial={false}
+        animate={{ 
+          x: (typeof window !== 'undefined' && window.innerWidth < 768) 
+            ? (isMobileOpen ? 0 : -280) 
+            : 0
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-r border-slate-800/50 z-40 flex flex-col overflow-hidden md:translate-x-0"
+      >
           {/* Logo */}
           <div className="p-6 border-b border-slate-800/50">
             <Link href="/">
-              <a className="flex items-center gap-3 group">
+              <a className="flex items-center gap-3 group" onClick={() => setIsMobileOpen(false)}>
                 <img src="/logo.png" alt="Tech Atlas" className="w-10 h-10 rounded-lg shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow" />
                 <div>
                   <h1 className="text-xl font-bold text-white font-['Space_Grotesk']">Tech Atlas</h1>
@@ -103,7 +105,7 @@ export default function Sidebar() {
               
               return (
                 <Link key={item.href} href={item.href}>
-                  <a>
+                  <a onClick={() => setIsMobileOpen(false)}>
                     <motion.div
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}
@@ -130,9 +132,9 @@ export default function Sidebar() {
             })}
 
             {/* Admin Link */}
-            {user?.role === "admin" && (
+            {user?.user_metadata?.role === "admin" && (
               <Link href="/admin">
-                <a>
+                <a onClick={() => setIsMobileOpen(false)}>
                   <motion.div
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
@@ -161,7 +163,7 @@ export default function Sidebar() {
                     <User className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{user.name || "User"}</p>
+                    <p className="text-sm font-medium text-white truncate">{user.user_metadata?.name || user.email?.split('@')[0] || "User"}</p>
                     <p className="text-xs text-slate-400 truncate">{user.email}</p>
                   </div>
                 </div>
@@ -170,6 +172,7 @@ export default function Sidebar() {
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    onClick={() => setIsMobileOpen(false)}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
@@ -178,7 +181,10 @@ export default function Sidebar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileOpen(false);
+                  }}
                   className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800/50"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
@@ -187,29 +193,26 @@ export default function Sidebar() {
               </div>
             ) : (
               <Button
-                asChild
+                onClick={() => {
+                  setShowAuthDialog(true);
+                  setIsMobileOpen(false);
+                }}
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
               >
-                <a href={getLoginUrl()}>
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
-                </a>
+                <User className="h-4 w-4 mr-2" />
+                Sign In
               </Button>
             )}
           </div>
         </motion.aside>
-      </AnimatePresence>
 
-      {/* Overlay for mobile */}
-      {!isCollapsed && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setIsCollapsed(true)}
-        />
-      )}
+      {/* Auth Dialog */}
+      <AuthDialog
+        title="Welcome to Tech Atlas"
+        logo="/logo.png"
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+      />
     </>
   );
 }

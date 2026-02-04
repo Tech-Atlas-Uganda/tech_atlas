@@ -7,4 +7,16 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  
+  // Supabase
+  supabaseUrl: process.env.SUPABASE_URL ?? "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  
+  // Email (Resend)
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  
+  // Analytics (Umami)
+  umamiApiUrl: process.env.UMAMI_API_URL ?? "",
+  umamiApiKey: process.env.UMAMI_API_KEY ?? "",
+  umamiWebsiteId: process.env.UMAMI_WEBSITE_ID ?? "",
 };

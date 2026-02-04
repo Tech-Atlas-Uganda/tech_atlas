@@ -1,201 +1,229 @@
-import { useState } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { 
   User, 
   Mail, 
+  MapPin, 
   Globe, 
   Github, 
   Linkedin, 
-  Twitter, 
-  MapPin, 
-  Briefcase, 
-  Code, 
-  Bell,
-  Lock,
+  Twitter,
+  Camera,
+  Plus,
+  X,
+  Save,
   Eye,
-  EyeOff,
-  Upload,
-  X
+  EyeOff
 } from "lucide-react";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  bio: string;
+  location: string;
+  website: string;
+  github: string;
+  linkedin: string;
+  twitter: string;
+  skills: string[];
+  interests: string[];
+  profilePicture: string;
+  isPublicProfile: boolean;
+  showInDirectory: boolean;
+}
 
 export default function ProfileSettings() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("profile");
-  
-  // Profile state
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [bio, setBio] = useState("");
-  const [location, setLocation] = useState("");
-  const [occupation, setOccupation] = useState("");
-  const [website, setWebsite] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [twitterUrl, setTwitterUrl] = useState("");
-  const [skills, setSkills] = useState<string[]>([]);
+  const [profile, setProfile] = useState<UserProfile>({
+    name: "",
+    email: "",
+    bio: "",
+    location: "",
+    website: "",
+    github: "",
+    linkedin: "",
+    twitter: "",
+    skills: [],
+    interests: [],
+    profilePicture: "",
+    isPublicProfile: true,
+    showInDirectory: true,
+  });
   const [newSkill, setNewSkill] = useState("");
-  
-  // Privacy settings
-  const [profileVisibility, setProfileVisibility] = useState(true);
-  const [showEmail, setShowEmail] = useState(false);
-  const [showLocation, setShowLocation] = useState(true);
-  
-  // Notification settings
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [jobAlerts, setJobAlerts] = useState(true);
-  const [eventReminders, setEventReminders] = useState(true);
-  const [communityUpdates, setCommunityUpdates] = useState(false);
+  const [newInterest, setNewInterest] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
 
-  const handleAddSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()]);
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.user_metadata?.name || "",
+        email: user.email || "",
+        bio: user.user_metadata?.bio || "",
+        location: user.user_metadata?.location || "",
+        website: user.user_metadata?.website || "",
+        github: user.user_metadata?.github || "",
+        linkedin: user.user_metadata?.linkedin || "",
+        twitter: user.user_metadata?.twitter || "",
+        skills: user.user_metadata?.skills || [],
+        interests: user.user_metadata?.interests || [],
+        profilePicture: user.user_metadata?.profile_picture || "",
+        isPublicProfile: user.user_metadata?.is_public_profile ?? true,
+        showInDirectory: user.user_metadata?.show_in_directory ?? true,
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (field: keyof UserProfile, value: any) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim() && !profile.skills.includes(newSkill.trim())) {
+      setProfile(prev => ({
+        ...prev,
+        skills: [...prev.skills, newSkill.trim()]
+      }));
       setNewSkill("");
     }
   };
 
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setSkills(skills.filter(s => s !== skillToRemove));
+  const removeSkill = (skill: string) => {
+    setProfile(prev => ({
+      ...prev,
+      skills: prev.skills.filter(s => s !== skill)
+    }));
   };
 
-  const handleSaveProfile = () => {
-    // TODO: Implement profile update mutation
-    toast.success("Profile updated successfully!");
+  const addInterest = () => {
+    if (newInterest.trim() && !profile.interests.includes(newInterest.trim())) {
+      setProfile(prev => ({
+        ...prev,
+        interests: [...prev.interests, newInterest.trim()]
+      }));
+      setNewInterest("");
+    }
   };
 
-  const handleSavePrivacy = () => {
-    // TODO: Implement privacy settings update
-    toast.success("Privacy settings updated!");
+  const removeInterest = (interest: string) => {
+    setProfile(prev => ({
+      ...prev,
+      interests: prev.interests.filter(i => i !== interest)
+    }));
   };
 
-  const handleSaveNotifications = () => {
-    // TODO: Implement notification preferences update
-    toast.success("Notification preferences updated!");
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      // TODO: Implement profile update API call
+      console.log("Saving profile:", profile);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>Please sign in to access profile settings</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container py-8 max-w-5xl">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-foreground font-['Space_Grotesk'] mb-2">
-            Profile Settings
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Manage your account, privacy, and notification preferences
-          </p>
-        </motion.div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-2"
+          >
+            <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your profile information and privacy settings
+            </p>
+          </motion.div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="social">Social Links</TabsTrigger>
+              <TabsTrigger value="privacy">Privacy</TabsTrigger>
+            </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            {/* Avatar Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <TabsContent value="profile" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile Picture</CardTitle>
-                  <CardDescription>Update your avatar and display name</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Basic Information
+                  </CardTitle>
+                  <CardDescription>
+                    Your basic profile information that will be displayed to others
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                  {/* Profile Picture */}
                   <div className="flex items-center gap-6">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src="" alt={name} />
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-2">
-                      <Button variant="outline" size="sm">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Photo
+                    <div className="relative">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        {profile.profilePicture ? (
+                          <img 
+                            src={profile.profilePicture} 
+                            alt="Profile" 
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-8 w-8 text-white" />
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                      >
+                        <Camera className="h-4 w-4" />
                       </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-medium">Profile Picture</h3>
                       <p className="text-sm text-muted-foreground">
-                        JPG, PNG or GIF. Max size 2MB.
+                        Upload a profile picture to help others recognize you
                       </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
 
-            {/* Basic Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>Your personal details and contact information</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="pl-10"
-                          placeholder="Your full name"
-                        />
-                      </div>
+                      <Input
+                        id="name"
+                        value={profile.name}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        placeholder="Your full name"
+                      />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          placeholder="your@email.com"
-                        />
-                      </div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile.email}
+                        disabled
+                        className="bg-muted"
+                      />
                     </div>
                   </div>
 
@@ -203,272 +231,225 @@ export default function ProfileSettings() {
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell us about yourself..."
+                      value={profile.bio}
+                      onChange={(e) => handleInputChange("bio", e.target.value)}
+                      placeholder="Tell others about yourself, your interests, and what you do..."
                       rows={4}
                     />
-                    <p className="text-sm text-muted-foreground">{bio.length}/500 characters</p>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="location"
-                          value={location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          className="pl-10"
-                          placeholder="Kampala, Uganda"
-                        />
-                      </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="location"
+                        value={profile.location}
+                        onChange={(e) => handleInputChange("location", e.target.value)}
+                        placeholder="City, Country"
+                        className="pl-10"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="occupation">Occupation</Label>
-                      <div className="relative">
-                        <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="occupation"
-                          value={occupation}
-                          onChange={(e) => setOccupation(e.target.value)}
-                          className="pl-10"
-                          placeholder="Software Developer"
-                        />
-                      </div>
+                  </div>
+
+                  {/* Skills */}
+                  <div className="space-y-3">
+                    <Label>Skills & Technologies</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.skills.map((skill) => (
+                        <Badge key={skill} variant="secondary" className="flex items-center gap-1">
+                          {skill}
+                          <button
+                            onClick={() => removeSkill(skill)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="Add a skill (e.g., React, Python, Design)"
+                        onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                      />
+                      <Button onClick={addSkill} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Interests */}
+                  <div className="space-y-3">
+                    <Label>Interests & Hobbies</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.interests.map((interest) => (
+                        <Badge key={interest} variant="outline" className="flex items-center gap-1">
+                          {interest}
+                          <button
+                            onClick={() => removeInterest(interest)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newInterest}
+                        onChange={(e) => setNewInterest(e.target.value)}
+                        placeholder="Add an interest (e.g., AI, Startups, Music)"
+                        onKeyPress={(e) => e.key === "Enter" && addInterest()}
+                      />
+                      <Button onClick={addInterest} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </TabsContent>
 
-            {/* Social Links */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
+            <TabsContent value="social" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Social Links</CardTitle>
-                  <CardDescription>Connect your social media profiles</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Social Links
+                  </CardTitle>
+                  <CardDescription>
+                    Connect your social profiles to help others find and connect with you
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website">Website/Portfolio</Label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="website"
-                        value={website}
-                        onChange={(e) => setWebsite(e.target.value)}
-                        className="pl-10"
+                        value={profile.website}
+                        onChange={(e) => handleInputChange("website", e.target.value)}
                         placeholder="https://yourwebsite.com"
+                        className="pl-10"
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="github">GitHub</Label>
                     <div className="relative">
                       <Github className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="github"
-                        value={githubUrl}
-                        onChange={(e) => setGithubUrl(e.target.value)}
+                        value={profile.github}
+                        onChange={(e) => handleInputChange("github", e.target.value)}
+                        placeholder="github.com/username"
                         className="pl-10"
-                        placeholder="https://github.com/username"
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="linkedin">LinkedIn</Label>
                     <div className="relative">
                       <Linkedin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="linkedin"
-                        value={linkedinUrl}
-                        onChange={(e) => setLinkedinUrl(e.target.value)}
+                        value={profile.linkedin}
+                        onChange={(e) => handleInputChange("linkedin", e.target.value)}
+                        placeholder="linkedin.com/in/username"
                         className="pl-10"
-                        placeholder="https://linkedin.com/in/username"
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="twitter">Twitter</Label>
                     <div className="relative">
                       <Twitter className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="twitter"
-                        value={twitterUrl}
-                        onChange={(e) => setTwitterUrl(e.target.value)}
+                        value={profile.twitter}
+                        onChange={(e) => handleInputChange("twitter", e.target.value)}
+                        placeholder="twitter.com/username"
                         className="pl-10"
-                        placeholder="https://twitter.com/username"
                       />
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </TabsContent>
 
-            {/* Skills */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
+            <TabsContent value="privacy" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Skills & Expertise</CardTitle>
-                  <CardDescription>Add your technical skills and areas of expertise</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Code className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
-                        className="pl-10"
-                        placeholder="Add a skill (e.g., React, Python)"
-                      />
-                    </div>
-                    <Button onClick={handleAddSkill}>Add</Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="px-3 py-1">
-                        {skill}
-                        <button
-                          onClick={() => handleRemoveSkill(skill)}
-                          className="ml-2 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                    {skills.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No skills added yet</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <Button onClick={handleSaveProfile} size="lg" className="w-full md:w-auto">
-              Save Profile Changes
-            </Button>
-          </TabsContent>
-
-          {/* Privacy Tab */}
-          <TabsContent value="privacy" className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Visibility</CardTitle>
-                  <CardDescription>Control who can see your profile information</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Privacy Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Control how your profile appears to others on the platform
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       <Label>Public Profile</Label>
                       <p className="text-sm text-muted-foreground">
-                        Make your profile visible to everyone
+                        Allow others to view your profile information
                       </p>
                     </div>
-                    <Switch checked={profileVisibility} onCheckedChange={setProfileVisibility} />
+                    <Switch
+                      checked={profile.isPublicProfile}
+                      onCheckedChange={(checked) => handleInputChange("isPublicProfile", checked)}
+                    />
                   </div>
+
                   <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Show Email Address</Label>
+                    <div className="space-y-1">
+                      <Label>Show in People Directory</Label>
                       <p className="text-sm text-muted-foreground">
-                        Display your email on your public profile
+                        Include your profile in the public people directory
                       </p>
                     </div>
-                    <Switch checked={showEmail} onCheckedChange={setShowEmail} />
+                    <Switch
+                      checked={profile.showInDirectory}
+                      onCheckedChange={(checked) => handleInputChange("showInDirectory", checked)}
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Show Location</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Display your location on your profile
-                      </p>
-                    </div>
-                    <Switch checked={showLocation} onCheckedChange={setShowLocation} />
+
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <h4 className="font-medium mb-2">What others can see:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Your name and profile picture</li>
+                      <li>• Your bio and location</li>
+                      <li>• Your skills and interests</li>
+                      <li>• Your social links (if provided)</li>
+                      <li>• Content you've submitted to the platform</li>
+                    </ul>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </TabsContent>
+          </Tabs>
 
-            <Button onClick={handleSavePrivacy} size="lg" className="w-full md:w-auto">
-              Save Privacy Settings
-            </Button>
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSave} 
+              disabled={isLoading}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Email Notifications</CardTitle>
-                  <CardDescription>Choose what updates you want to receive</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive email notifications about your account
-                      </p>
-                    </div>
-                    <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Job Alerts</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified about new job opportunities
-                      </p>
-                    </div>
-                    <Switch checked={jobAlerts} onCheckedChange={setJobAlerts} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Event Reminders</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive reminders for upcoming events
-                      </p>
-                    </div>
-                    <Switch checked={eventReminders} onCheckedChange={setEventReminders} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Community Updates</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Stay updated with community news and announcements
-                      </p>
-                    </div>
-                    <Switch checked={communityUpdates} onCheckedChange={setCommunityUpdates} />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <Button onClick={handleSaveNotifications} size="lg" className="w-full md:w-auto">
-              Save Notification Preferences
+              <Save className="h-4 w-4 mr-2" />
+              {isLoading ? "Saving..." : "Save Changes"}
             </Button>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

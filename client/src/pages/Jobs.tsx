@@ -11,7 +11,7 @@ import { Briefcase, DollarSign, MapPin, Clock, Search, Plus, Building } from "lu
 import { motion } from "framer-motion";
 
 export default function Jobs() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");                                                                                                                                                                                                                                                                                                                  
   const [activeTab, setActiveTab] = useState("jobs");
   const [jobTypeFilter, setJobTypeFilter] = useState<string>("all");
   const [remoteFilter, setRemoteFilter] = useState<string>("all");
@@ -86,7 +86,7 @@ export default function Jobs() {
               </p>
             </div>
             <Button asChild>
-              <Link href="/jobs/post">
+              <Link href="/submit/job">
                 <a className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   Post Opportunity

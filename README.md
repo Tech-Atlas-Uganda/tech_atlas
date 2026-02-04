@@ -64,7 +64,7 @@ Tech Atlas is built with modern web technologies optimized for performance, scal
 - **Vite** for fast development and optimized production builds
 - **Vitest** for unit and integration testing
 - **Google Maps JavaScript API** for interactive mapping
-- **Manus OAuth** for authentication
+- **Custom authentication** system
 
 ## Getting Started
 
@@ -88,12 +88,11 @@ pnpm install
 
 ### Configuration
 
-Environment variables are automatically injected by the Manus platform. For local development, create a `.env` file with the following:
+For local development, create a `.env` file with the following:
 
 ```env
 DATABASE_URL=mysql://user:password@localhost:3306/techatlas
 JWT_SECRET=your-jwt-secret
-OAUTH_SERVER_URL=https://api.manus.im
 ```
 
 ### Database Setup

@@ -5,6 +5,7 @@ import { useCounter } from "@/hooks/useCounter";
 import { MapPin, Briefcase, BookOpen, Calendar, FileText, Users, TrendingUp, Globe } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import Footer from "@/components/Footer";
 
 function StatCard({ stat, index, isInView }: { stat: any; index: number; isInView: boolean }) {
   const Icon = stat.icon;
@@ -232,47 +233,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-12 bg-muted/30">
-        <div className="container">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <h3 className="font-bold text-lg font-['Space_Grotesk']">Tech Atlas</h3>
-              <p className="text-sm text-muted-foreground">
-                Uganda's open platform for tech ecosystem mapping and community connection.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-semibold">Platform</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/ecosystem" className="hover:text-foreground transition-smooth">Ecosystem</Link></li>
-                <li><Link href="/jobs" className="hover:text-foreground transition-smooth">Jobs & Gigs</Link></li>
-                <li><Link href="/learning" className="hover:text-foreground transition-smooth">Learning</Link></li>
-                <li><Link href="/events" className="hover:text-foreground transition-smooth">Events</Link></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-semibold">Community</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/blog" className="hover:text-foreground transition-smooth">Blog</Link></li>
-                <li><Link href="/contribute" className="hover:text-foreground transition-smooth">Contribute</Link></li>
-                <li><Link href="/governance" className="hover:text-foreground transition-smooth">Governance</Link></li>
-                <li><Link href="/about" className="hover:text-foreground transition-smooth">About</Link></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-semibold">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/privacy" className="hover:text-foreground transition-smooth">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground transition-smooth">Terms of Service</Link></li>
-                <li><Link href="/code-of-conduct" className="hover:text-foreground transition-smooth">Code of Conduct</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
-            <p>© 2026 Tech Atlas. Built with ❤️ by Uganda's tech community.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

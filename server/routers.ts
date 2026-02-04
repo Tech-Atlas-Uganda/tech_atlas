@@ -4,6 +4,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { analyticsService } from "./_core/analytics";
+import { emailService } from "./_core/email";
 import * as db from "./db";
 
 // Helper to generate URL-friendly slugs
@@ -74,7 +76,7 @@ export const appRouter = router({
         return await db.getHubBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         name: z.string(),
         slug: z.string().optional(),
@@ -95,7 +97,7 @@ export const appRouter = router({
         await db.createHub({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getHubBySlug(slug);
@@ -157,7 +159,7 @@ export const appRouter = router({
         return await db.getCommunityBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         name: z.string(),
         slug: z.string().optional(),
@@ -179,7 +181,7 @@ export const appRouter = router({
         await db.createCommunity({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getCommunityBySlug(slug);
@@ -229,7 +231,7 @@ export const appRouter = router({
         return await db.getStartupBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         name: z.string(),
         slug: z.string().optional(),
@@ -253,7 +255,7 @@ export const appRouter = router({
         await db.createStartup({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getStartupBySlug(slug);
@@ -305,7 +307,7 @@ export const appRouter = router({
         return await db.getJobBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         title: z.string(),
         slug: z.string().optional(),
@@ -314,6 +316,7 @@ export const appRouter = router({
         requirements: z.string().optional(),
         responsibilities: z.string().optional(),
         type: z.enum(['full-time', 'part-time', 'internship', 'contract']),
+        category: z.string().optional(),
         location: z.string().optional(),
         remote: z.boolean().optional(),
         skills: z.array(z.string()).optional(),
@@ -323,6 +326,10 @@ export const appRouter = router({
         currency: z.string().optional(),
         applicationUrl: z.string().optional(),
         applicationEmail: z.string().optional(),
+        companyWebsite: z.string().optional(),
+        latitude: z.string().optional(),
+        longitude: z.string().optional(),
+        submitterName: z.string().optional(),
         expiresAt: z.date().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -330,7 +337,7 @@ export const appRouter = router({
         await db.createJob({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getJobBySlug(slug);
@@ -380,7 +387,7 @@ export const appRouter = router({
         return await db.getGigBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         title: z.string(),
         slug: z.string().optional(),
@@ -402,7 +409,7 @@ export const appRouter = router({
         await db.createGig({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getGigBySlug(slug);
@@ -453,7 +460,7 @@ export const appRouter = router({
         return await db.getLearningResourceBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         title: z.string(),
         slug: z.string().optional(),
@@ -472,7 +479,7 @@ export const appRouter = router({
         await db.createLearningResource({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getLearningResourceBySlug(slug);
@@ -522,7 +529,7 @@ export const appRouter = router({
         return await db.getEventBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         title: z.string(),
         slug: z.string().optional(),
@@ -543,7 +550,7 @@ export const appRouter = router({
         await db.createEvent({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getEventBySlug(slug);
@@ -593,7 +600,7 @@ export const appRouter = router({
         return await db.getOpportunityBySlug(input);
       }),
     
-    create: protectedProcedure
+    create: publicProcedure
       .input(z.object({
         title: z.string(),
         slug: z.string().optional(),
@@ -611,7 +618,7 @@ export const appRouter = router({
         await db.createOpportunity({
           ...input,
           slug,
-          createdBy: ctx.user.id,
+          createdBy: ctx.user?.id ?? 0, // Use 0 for anonymous submissions
           status: 'pending',
         });
         const created = await db.getOpportunityBySlug(slug);
@@ -802,6 +809,13 @@ export const appRouter = router({
       }),
   }),
 
+  // Dashboard statistics (public)
+  stats: router({
+    getCounts: publicProcedure.query(async () => {
+      return await db.getContentStats();
+    }),
+  }),
+
   // Admin functions
   admin: router({
     getPendingContent: adminProcedure.query(async () => {
@@ -811,6 +825,66 @@ export const appRouter = router({
     getStats: adminProcedure.query(async () => {
       return await db.getContentStats();
     }),
+
+    // Analytics dashboard
+    getAnalytics: adminProcedure
+      .input(z.object({
+        period: z.enum(['7d', '30d', '90d']).optional().default('30d'),
+      }))
+      .query(async ({ input }) => {
+        const now = Date.now();
+        const periodMs = {
+          '7d': 7 * 24 * 60 * 60 * 1000,
+          '30d': 30 * 24 * 60 * 60 * 1000,
+          '90d': 90 * 24 * 60 * 60 * 1000,
+        };
+        
+        const startAt = now - periodMs[input.period];
+        
+        return await analyticsService.getStats({
+          startAt,
+          endAt: now,
+          unit: input.period === '7d' ? 'day' : 'day'
+        });
+      }),
+
+    getTopPages: adminProcedure
+      .input(z.object({
+        period: z.enum(['7d', '30d', '90d']).optional().default('30d'),
+      }))
+      .query(async ({ input }) => {
+        const now = Date.now();
+        const periodMs = {
+          '7d': 7 * 24 * 60 * 60 * 1000,
+          '30d': 30 * 24 * 60 * 60 * 1000,
+          '90d': 90 * 24 * 60 * 60 * 1000,
+        };
+        
+        const startAt = now - periodMs[input.period];
+        
+        return await analyticsService.getTopPages({
+          startAt,
+          endAt: now
+        });
+      }),
+
+    sendTestEmail: adminProcedure
+      .input(z.object({
+        to: z.string().email(),
+        type: z.enum(['welcome', 'approval']).optional().default('welcome'),
+      }))
+      .mutation(async ({ input }) => {
+        if (input.type === 'welcome') {
+          return await emailService.sendWelcomeEmail(input.to, 'Test User');
+        } else {
+          return await emailService.sendContentApprovalEmail(
+            input.to, 
+            'test content', 
+            'Test Submission', 
+            true
+          );
+        }
+      }),
   }),
 });
 

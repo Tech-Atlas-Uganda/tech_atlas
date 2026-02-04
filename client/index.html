@@ -6,7 +6,8 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Tech Atlas - Uganda's Tech Ecosystem Platform</title>
+    <title>Tech Atlas Uganda - Uganda's Tech Ecosystem Platform</title>
+    <meta name="description" content="Discover Uganda's tech ecosystem - hubs, startups, jobs, events, and opportunities all in one place." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -15,10 +16,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Umami Analytics -->
     <script
       defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+      src="%VITE_UMAMI_SRC%"
+      data-website-id="%VITE_UMAMI_WEBSITE_ID%"></script>
   </body>
 
 </html>

@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -14,6 +15,7 @@ import Jobs from "./pages/Jobs";
 import Learning from "./pages/Learning";
 import Events from "./pages/Events";
 import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
 import Admin from "./pages/Admin";
 import SubmitHub from "./pages/SubmitHub";
 import SubmitJob from "./pages/SubmitJob";
@@ -33,44 +35,133 @@ import Support from "./pages/Support";
 import Forum from "./pages/Forum";
 import NewThread from "./pages/NewThread";
 import ThreadDetail from "./pages/ThreadDetail";
+import { AuthCallback } from "./pages/AuthCallback";
 
 function Router() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="flex-1 md:ml-64 flex flex-col">
+      <main className="flex-1 ml-0 md:ml-64 flex flex-col">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/map" component={UgandaMap} />
-          <Route path="/ecosystem" component={Ecosystem} />
-          <Route path="/jobs" component={Jobs} />
-          <Route path="/learning" component={Learning} />
-          <Route path="/events" component={Events} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/submit/hub" component={SubmitHub} />
-          <Route path="/submit/job" component={SubmitJob} />
-          <Route path="/submit/event" component={SubmitEvent} />
-          <Route path="/submit/resource" component={SubmitResource} />
-          <Route path="/submit/blog" component={SubmitBlog} />
-          <Route path="/profile/settings" component={ProfileSettings} />
-          <Route path="/team" component={Team} />
-          <Route path="/profiles" component={Profiles} />
-          <Route path="/contribute" component={Contribute} />
-          <Route path="/governance" component={Governance} />
-          <Route path="/about" component={About} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/code-of-conduct" component={CodeOfConduct} />
-          <Route path="/support" component={Support} />
-          <Route path="/forum" component={Forum} />
-          <Route path="/forum/new" component={NewThread} />
-          <Route path="/forum/:slug" component={ThreadDetail} />
-          <Route path="/404" component={NotFound} />
-          <Route component={NotFound} />
+          <Route path="/dashboard">
+            <Dashboard />
+            <Footer />
+          </Route>
+          <Route path="/map">
+            <UgandaMap />
+            <Footer />
+          </Route>
+          <Route path="/ecosystem">
+            <Ecosystem />
+            <Footer />
+          </Route>
+          <Route path="/profiles">
+            <Profiles />
+            <Footer />
+          </Route>
+          <Route path="/jobs">
+            <Jobs />
+            <Footer />
+          </Route>
+          <Route path="/learning">
+            <Learning />
+            <Footer />
+          </Route>
+          <Route path="/events">
+            <Events />
+            <Footer />
+          </Route>
+          <Route path="/blog">
+            <Blog />
+            <Footer />
+          </Route>
+          <Route path="/blog/:slug">
+            <BlogDetail />
+            <Footer />
+          </Route>
+          <Route path="/admin">
+            <Admin />
+            <Footer />
+          </Route>
+          <Route path="/submit/hub">
+            <SubmitHub />
+            <Footer />
+          </Route>
+          <Route path="/submit/job">
+            <SubmitJob />
+            <Footer />
+          </Route>
+          <Route path="/submit/event">
+            <SubmitEvent />
+            <Footer />
+          </Route>
+          <Route path="/submit/resource">
+            <SubmitResource />
+            <Footer />
+          </Route>
+          <Route path="/submit/blog">
+            <SubmitBlog />
+            <Footer />
+          </Route>
+          <Route path="/profile/settings">
+            <ProfileSettings />
+            <Footer />
+          </Route>
+          <Route path="/team">
+            <Team />
+            <Footer />
+          </Route>
+          <Route path="/contribute">
+            <Contribute />
+            <Footer />
+          </Route>
+          <Route path="/governance">
+            <Governance />
+            <Footer />
+          </Route>
+          <Route path="/about">
+            <About />
+            <Footer />
+          </Route>
+          <Route path="/privacy">
+            <Privacy />
+            <Footer />
+          </Route>
+          <Route path="/terms">
+            <Terms />
+            <Footer />
+          </Route>
+          <Route path="/code-of-conduct">
+            <CodeOfConduct />
+            <Footer />
+          </Route>
+          <Route path="/support">
+            <Support />
+            <Footer />
+          </Route>
+          <Route path="/forum">
+            <Forum />
+            <Footer />
+          </Route>
+          <Route path="/forum/new">
+            <NewThread />
+            <Footer />
+          </Route>
+          <Route path="/forum/:slug">
+            <ThreadDetail />
+            <Footer />
+          </Route>
+          <Route path="/auth/callback" component={AuthCallback} />
+          <Route path="/404">
+            <NotFound />
+            <Footer />
+          </Route>
+          <Route>
+            <NotFound />
+            <Footer />
+          </Route>
         </Switch>
-        <Footer />
       </main>
     </div>
   );
@@ -80,10 +171,12 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

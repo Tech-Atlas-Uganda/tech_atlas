@@ -1,17 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { Building2, Users, Rocket, MapPin, Search, Plus, Map as MapIcon, List } from "lucide-react";
 import { motion } from "framer-motion";
 import { MapView } from "@/components/Map";
 
 type EntityType = "hub" | "community" | "startup";
+
+// All Uganda districts for filtering
+const ALL_DISTRICTS = [
+  // Central Region
+  "Kampala", "Wakiso", "Mukono", "Mpigi", "Luwero", "Nakaseke", "Nakasongola", "Kayunga", "Buikwe", "Buvuma", "Kalangala", "Masaka", "Rakai", "Lyantonde", "Sembabule", "Kalungu", "Butambala", "Gomba", "Mityana", "Mubende", "Kiboga", "Kyankwanzi",
+  // Eastern Region  
+  "Jinja", "Mbale", "Soroti", "Tororo", "Iganga", "Mayuge", "Kamuli", "Buyende", "Luuka", "Namutumba", "Bugiri", "Busia", "Manafwa", "Bududa", "Sironko", "Bulambuli", "Kapchorwa", "Kween", "Bukwo", "Pallisa", "Budaka", "Kibuku", "Serere", "Ngora", "Kumi", "Bukedea", "Kaberamaido", "Katakwi", "Amuria", "Napak", "Amudat", "Nakapiripirit", "Moroto", "Kotido", "Kaabong", "Abim",
+  // Northern Region
+  "Gulu", "Lira", "Arua", "Kitgum", "Pader", "Agago", "Lamwo", "Amuru", "Nwoya", "Oyam", "Apac", "Kole", "Dokolo", "Alebtong", "Otuke", "Yumbe", "Moyo", "Adjumani", "Obongi", "Madi-Okollo", "Pakwach", "Nebbi", "Zombo", "Koboko",
+  // Western Region
+  "Mbarara", "Fort Portal", "Kasese", "Kabale", "Bushenyi", "Ntungamo", "Rukungiri", "Kanungu", "Kisoro", "Rubanda", "Mitooma", "Sheema", "Buhweju", "Rubirizi", "Ibanda", "Isingiro", "Kiruhura", "Lwengo", "Hoima", "Masindi", "Kibaale", "Kakumiro", "Kiryandongo", "Buliisa", "Bundibugyo", "Ntoroko", "Kabarole", "Kamwenge", "Kyenjojo", "Kyegegwa", "Bunyangabu"
+].sort();
 
 interface Entity {
   id: number;
@@ -33,6 +48,15 @@ export default function Ecosystem() {
   const [activeTab, setActiveTab] = useState("hubs");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [showSubmissionModal, setShowSubmissionModal] = useState<'hub' | 'community' | 'startup' | null>(null);
+  const [submissionForm, setSubmissionForm] = useState({
+    name: '',
+    description: '',
+    location: '',
+    website: '',
+    email: '',
+    phone: '',
+  });
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
@@ -53,7 +77,7 @@ export default function Ecosystem() {
       );
     }
     
-    if (location) {
+    if (location && location.trim() !== "") {
       filtered = filtered.filter(item =>
         item.location?.toLowerCase().includes(location.toLowerCase())
       );
@@ -80,11 +104,30 @@ export default function Ecosystem() {
   };
 
   const getUniqueLocations = () => {
-    const allEntities = [...(hubs || []), ...(communities || []), ...(startups || [])];
-    const locations = allEntities
-      .map(e => e.location)
-      .filter((loc): loc is string => !!loc);
-    return Array.from(new Set(locations)).sort();
+    return ALL_DISTRICTS;
+  };
+
+  const handleSubmissionFormChange = (field: string, value: string) => {
+    setSubmissionForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmissionSubmit = () => {
+    // Here you would typically send the data to your backend via TRPC
+    console.log('Submitting:', showSubmissionModal, submissionForm);
+    
+    // Reset form and close modal
+    setSubmissionForm({
+      name: '',
+      description: '',
+      location: '',
+      website: '',
+      email: '',
+      phone: '',
+    });
+    setShowSubmissionModal(null);
+    
+    // Show success message (you can implement toast notifications)
+    alert(`${showSubmissionModal} submitted successfully! It's now live on the platform. Moderators will review and remove any inappropriate content.`);
   };
 
   const initializeMap = (map: google.maps.Map) => {
@@ -278,14 +321,56 @@ export default function Ecosystem() {
                 Discover tech hubs, communities, and startups across Uganda
               </p>
             </div>
-            <Button asChild>
-              <Link href="/submit/hub">
-                <a className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Your Organization
-                </a>
-              </Link>
-            </Button>
+            <div className="flex flex-col md:flex-row gap-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                    <Plus className="h-4 w-4" />
+                    Add Your Organization
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Choose Organization Type</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-3 py-4">
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-3 h-auto p-4"
+                      onClick={() => setShowSubmissionModal('hub')}
+                    >
+                      <Building2 className="h-5 w-5 text-blue-500" />
+                      <div className="text-left">
+                        <div className="font-medium">Tech Hub</div>
+                        <div className="text-sm text-muted-foreground">Co-working spaces, incubators, accelerators</div>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-3 h-auto p-4"
+                      onClick={() => setShowSubmissionModal('community')}
+                    >
+                      <Users className="h-5 w-5 text-purple-500" />
+                      <div className="text-left">
+                        <div className="font-medium">Community</div>
+                        <div className="text-sm text-muted-foreground">Developer groups, meetups, organizations</div>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-3 h-auto p-4"
+                      onClick={() => setShowSubmissionModal('startup')}
+                    >
+                      <Rocket className="h-5 w-5 text-pink-500" />
+                      <div className="text-left">
+                        <div className="font-medium">Startup</div>
+                        <div className="text-sm text-muted-foreground">Tech companies, startups, businesses</div>
+                      </div>
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -300,16 +385,28 @@ export default function Ecosystem() {
               />
             </div>
             <div className="flex gap-2">
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-4 py-2 border rounded-md bg-background text-foreground"
-              >
-                <option value="">All Locations</option>
-                {getUniqueLocations().map(loc => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="All Districts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_DISTRICTS.map(district => (
+                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedLocation && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedLocation("")}
+                    className="px-2"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
               <div className="flex border rounded-md overflow-hidden">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
@@ -419,6 +516,110 @@ export default function Ecosystem() {
             </>
           )}
         </Tabs>
+
+        {/* Submission Modals */}
+        <Dialog open={!!showSubmissionModal} onOpenChange={() => setShowSubmissionModal(null)}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                {showSubmissionModal === 'hub' && <Building2 className="h-5 w-5 text-blue-500" />}
+                {showSubmissionModal === 'community' && <Users className="h-5 w-5 text-purple-500" />}
+                {showSubmissionModal === 'startup' && <Rocket className="h-5 w-5 text-pink-500" />}
+                Add {showSubmissionModal === 'hub' ? 'Tech Hub' : showSubmissionModal === 'community' ? 'Community' : 'Startup'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={submissionForm.name}
+                  onChange={(e) => handleSubmissionFormChange('name', e.target.value)}
+                  placeholder={`Enter ${showSubmissionModal} name`}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Description *</Label>
+                <Textarea
+                  id="description"
+                  value={submissionForm.description}
+                  onChange={(e) => handleSubmissionFormChange('description', e.target.value)}
+                  placeholder="Describe what you do, your mission, or services offered"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="location">Location *</Label>
+                <Select value={submissionForm.location} onValueChange={(value) => handleSubmissionFormChange('location', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select district..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_DISTRICTS.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  value={submissionForm.website}
+                  onChange={(e) => handleSubmissionFormChange('website', e.target.value)}
+                  placeholder="https://yourwebsite.com"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={submissionForm.email}
+                  onChange={(e) => handleSubmissionFormChange('email', e.target.value)}
+                  placeholder="contact@yourorganization.com"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={submissionForm.phone}
+                  onChange={(e) => handleSubmissionFormChange('phone', e.target.value)}
+                  placeholder="+256 XXX XXX XXX"
+                />
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Moderation Policy:</strong> Platform moderators will remove any submissions that are irrelevant, illegal, or violate our community guidelines. All listings are publicly visible once submitted.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  onClick={handleSubmissionSubmit}
+                  disabled={!submissionForm.name || !submissionForm.description || !submissionForm.location || !submissionForm.email}
+                  className="flex-1"
+                >
+                  Submit Anonymously
+                </Button>
+                <Button variant="outline" onClick={() => setShowSubmissionModal(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import { CORE_CATEGORIES } from "../../../shared/const";
 import { BookOpen, Search, Plus, ExternalLink, Award, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -41,16 +42,7 @@ export default function Learning() {
 
   const filteredResources = filterResources(resources);
 
-  const categories = [
-    "Web Development",
-    "Mobile Development",
-    "AI & Machine Learning",
-    "Data Science",
-    "Cybersecurity",
-    "Hardware & IoT",
-    "Product Management",
-    "UI/UX Design",
-  ];
+  // Use standardized categories from shared constants
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,7 +92,7 @@ export default function Learning() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (
+                {CORE_CATEGORIES.map(cat => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
               </SelectContent>
@@ -234,7 +226,7 @@ export default function Learning() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
+            {CORE_CATEGORIES.map((category, index) => (
               <motion.div
                 key={category}
                 initial={{ opacity: 0, y: 20 }}

@@ -1,19 +1,25 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { trpc } from "@/lib/trpc";
-import { FileText, Search, Plus, Clock, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { FileText, Search, Plus, Clock, User, PenTool } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Blog() {
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  const { data: posts, isLoading } = trpc.blog.list.useQuery({ status: "published" });
+  // Fetch real blog posts from database
+  const { data: posts, isLoading } = trpc.blog.list.useQuery({ 
+    status: "published",
+    limit: 50 
+  });
 
   const filterPosts = (items: any[] | undefined) => {
     if (!items) return [];
@@ -22,7 +28,8 @@ export default function Blog() {
     if (searchQuery) {
       filtered = filtered.filter(item =>
         item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+        item.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -39,12 +46,14 @@ export default function Blog() {
 
   const categories = [
     "Community Spotlight",
-    "Startup Journey",
+    "Startup Journey", 
     "Career Guidance",
     "Policy & Ecosystem",
     "Event Recap",
     "Tech Trends",
     "Tutorial",
+    "Case Study",
+    "Innovation"
   ];
 
   const formatDate = (date: Date | string) => {
@@ -76,14 +85,23 @@ export default function Blog() {
                 Community insights, startup journeys, and ecosystem updates
               </p>
             </div>
-            <Button asChild>
-              <Link href="/blog/write">
-                <a className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Write Story
-                </a>
-              </Link>
-            </Button>
+            <div className="flex items-center gap-4">
+              {isAuthenticated ? (
+                <Button asChild className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                  <Link href="/submit/blog">
+                    <a className="flex items-center gap-2">
+                      <PenTool className="h-4 w-4" />
+                      Write Article
+                    </a>
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="outline" disabled>
+                  <PenTool className="h-4 w-4 mr-2" />
+                  Sign in to Write
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Filters */}

@@ -8,12 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Building2 } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 
 export default function SubmitHub() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -54,35 +51,6 @@ export default function SubmitHub() {
       focusAreas: formData.focusAreas ? formData.focusAreas.split(",").map(s => s.trim()) : undefined,
     });
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>You need to be logged in to submit a hub.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={() => window.location.href = getLoginUrl()} className="w-full">
-              Sign In to Continue
-            </Button>
-            <Button variant="outline" onClick={() => setLocation("/")} className="w-full">
-              Back to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900">
@@ -219,9 +187,12 @@ export default function SubmitHub() {
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground text-center">
-                Your submission will be reviewed by our moderation team before appearing on the platform.
-              </p>
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
+                <p className="text-blue-700 dark:text-blue-300">
+                  <strong>Anonymous Submissions Welcome:</strong> You can submit tech hubs without creating an account. 
+                  All submissions are reviewed by our moderation team before publication to ensure quality and relevance.
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>

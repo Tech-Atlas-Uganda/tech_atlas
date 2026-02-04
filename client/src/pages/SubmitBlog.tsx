@@ -1,227 +1,426 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { ArrowLeft, PenSquare } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
-import { Streamdown } from "streamdown";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import { useLocation } from "wouter";
+import { 
+  FileText, 
+  Image, 
+  Plus, 
+  X, 
+  Upload,
+  Eye,
+  Send,
+  Tag
+} from "lucide-react";
+
+interface BlogPost {
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string[];
+  coverImage: File | null;
+  coverImagePreview: string;
+}
+
+const categories = [
+  "Community Spotlight",
+  "Startup Journey", 
+  "Career Guidance",
+  "Policy & Ecosystem",
+  "Event Recap",
+  "Tech Trends",
+  "Tutorial",
+  "Case Study",
+  "Innovation"
+];
 
 export default function SubmitBlog() {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { isAuthenticated, loading: authLoading } = useAuth();
-  const [formData, setFormData] = useState({
+  const [post, setPost] = useState<BlogPost>({
     title: "",
     excerpt: "",
     content: "",
     category: "",
-    tags: "",
-    coverImage: "",
+    tags: [],
+    coverImage: null,
+    coverImagePreview: ""
   });
+  const [newTag, setNewTag] = useState("");
+  const [isPreview, setIsPreview] = useState(false);
 
-  const createPost = trpc.blog.create.useMutation({
+  // TRPC mutation for creating blog posts
+  const createBlogPost = trpc.blog.create.useMutation({
     onSuccess: () => {
-      toast.success("Blog post submitted successfully! It will be reviewed by our team.");
+      alert("Blog post submitted successfully! It will be reviewed before publication.");
       setLocation("/blog");
     },
     onError: (error) => {
-      toast.error(`Failed to submit post: ${error.message}`);
-    },
+      console.error("Failed to submit blog post:", error);
+      alert("Failed to submit blog post. Please try again.");
+    }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast.error("Title and content are required");
-      return;
-    }
-
-    createPost.mutate({
-      title: formData.title,
-      excerpt: formData.excerpt || undefined,
-      content: formData.content,
-      category: formData.category || undefined,
-      tags: formData.tags ? formData.tags.split(",").map(s => s.trim()) : undefined,
-      coverImage: formData.coverImage || undefined,
-    });
+  const handleInputChange = (field: keyof BlogPost, value: any) => {
+    setPost(prev => ({ ...prev, [field]: value }));
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPost(prev => ({ ...prev, coverImage: file }));
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPost(prev => ({ ...prev, coverImagePreview: e.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>You need to be logged in to write a blog post.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={() => window.location.href = getLoginUrl()} className="w-full">
-              Sign In to Continue
-            </Button>
-            <Button variant="outline" onClick={() => setLocation("/")} className="w-full">
-              Back to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const addTag = () => {
+    if (newTag.trim() && !post.tags.includes(newTag.trim()) && post.tags.length < 10) {
+      setPost(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag.trim()]
+      }));
+      setNewTag("");
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setPost(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t !== tag)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await createBlogPost.mutateAsync({
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        category: post.category,
+        tags: post.tags,
+        // Note: File upload would need separate handling
+        // coverImage: post.coverImage
+      });
+      
+      // Reset form on success
+      setPost({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: "",
+        tags: [],
+        coverImage: null,
+        coverImagePreview: ""
+      });
+      
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900">
-      <div className="container max-w-4xl py-12">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation("/blog")}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Blog
-        </Button>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-2"
+          >
+            <h1 className="text-3xl font-bold text-foreground">Submit Blog Post</h1>
+            <p className="text-muted-foreground">
+              Share your insights, experiences, and knowledge with Uganda's tech community
+            </p>
+          </motion.div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <PenSquare className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl">Write a Blog Post</CardTitle>
-                <CardDescription>
-                  Share your story, insights, or experiences with the tech community. Markdown formatting is supported.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Post Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., My Journey into Tech"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="A brief summary of your post (will appear in listings)"
-                  rows={2}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Content * (Markdown supported)</Label>
-                <Tabs defaultValue="write" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="write">Write</TabsTrigger>
-                    <TabsTrigger value="preview">Preview</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="write" className="mt-4">
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Write your post content here... You can use Markdown formatting:&#10;&#10;# Heading 1&#10;## Heading 2&#10;**Bold text**&#10;*Italic text*&#10;- List item&#10;[Link](https://example.com)&#10;```code block```"
-                      rows={16}
-                      className="font-mono text-sm"
-                      required
-                    />
-                  </TabsContent>
-                  <TabsContent value="preview" className="mt-4">
-                    <div className="border rounded-lg p-4 min-h-[400px] bg-background prose prose-slate dark:prose-invert max-w-none">
-                      {formData.content ? (
-                        <Streamdown>{formData.content}</Streamdown>
-                      ) : (
-                        <p className="text-muted-foreground">Nothing to preview yet. Start writing in the Write tab.</p>
-                      )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Form */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Blog Post Details
+                  </CardTitle>
+                  <CardDescription>
+                    Create engaging content that adds value to the community
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Title */}
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title *</Label>
+                      <Input
+                        id="title"
+                        value={post.title}
+                        onChange={(e) => handleInputChange("title", e.target.value)}
+                        placeholder="Write a compelling title for your blog post"
+                        required
+                      />
                     </div>
-                  </TabsContent>
-                </Tabs>
-                <p className="text-xs text-muted-foreground">
-                  Use Markdown syntax for formatting. Switch to Preview tab to see how it will look.
-                </p>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="e.g., Community Spotlight, Career Guidance"
+                    {/* Excerpt */}
+                    <div className="space-y-2">
+                      <Label htmlFor="excerpt">Excerpt *</Label>
+                      <Textarea
+                        id="excerpt"
+                        value={post.excerpt}
+                        onChange={(e) => handleInputChange("excerpt", e.target.value)}
+                        placeholder="Write a brief summary that will appear in blog listings..."
+                        rows={3}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {post.excerpt.length}/200 characters
+                      </p>
+                    </div>
+
+                    {/* Cover Image */}
+                    <div className="space-y-2">
+                      <Label>Cover Image</Label>
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                        {post.coverImagePreview ? (
+                          <div className="space-y-4">
+                            <img
+                              src={post.coverImagePreview}
+                              alt="Cover preview"
+                              className="w-full h-48 object-cover rounded-lg"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setPost(prev => ({ 
+                                ...prev, 
+                                coverImage: null, 
+                                coverImagePreview: "" 
+                              }))}
+                            >
+                              Remove Image
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-center space-y-4">
+                            <Image className="h-12 w-12 mx-auto text-muted-foreground" />
+                            <div>
+                              <Label htmlFor="cover-image" className="cursor-pointer">
+                                <div className="text-sm text-muted-foreground">
+                                  Click to upload or drag and drop
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  PNG, JPG, GIF up to 5MB
+                                </div>
+                              </Label>
+                              <Input
+                                id="cover-image"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Category */}
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <select
+                        id="category"
+                        value={post.category}
+                        onChange={(e) => handleInputChange("category", e.target.value)}
+                        className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map(category => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-3">
+                      <Label>Tags</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                            <Tag className="h-3 w-3" />
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          placeholder="Add a tag (e.g., React, AI, Startup)"
+                          onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                        />
+                        <Button type="button" onClick={addTag} size="sm" disabled={post.tags.length >= 10}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {post.tags.length}/10 tags
+                      </p>
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-2">
+                      <Label htmlFor="content">Content *</Label>
+                      <Textarea
+                        id="content"
+                        value={post.content}
+                        onChange={(e) => handleInputChange("content", e.target.value)}
+                        placeholder="Write your blog post content here. You can use Markdown formatting..."
+                        rows={15}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supports Markdown formatting. {post.content.length} characters
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsPreview(!isPreview)}
+                        className="flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        {isPreview ? "Edit" : "Preview"}
+                      </Button>
+                      
+                      <Button
+                        type="submit"
+                        disabled={createBlogPost.isPending || !post.title || !post.excerpt || !post.content || !post.category}
+                        className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      >
+                        <Send className="h-4 w-4" />
+                        {createBlogPost.isPending ? "Submitting..." : "Submit for Review"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Guidelines */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Writing Guidelines</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-foreground">Content Quality</h4>
+                    <p className="text-muted-foreground">Write original, valuable content that helps the community learn and grow.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-foreground">Formatting</h4>
+                    <p className="text-muted-foreground">Use clear headings, bullet points, and code blocks to improve readability.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-foreground">Images</h4>
+                    <p className="text-muted-foreground">Include relevant images to illustrate your points and engage readers.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-foreground">Review Process</h4>
+                    <p className="text-muted-foreground">All posts are reviewed for quality and relevance before publication.</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Author Info */}
+              {user && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Author</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          {(user.user_metadata?.name || user.email)?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{user.user_metadata?.name || user.email?.split('@')[0]}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* Preview Modal */}
+          {isPreview && (
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle>Preview</CardTitle>
+                <CardDescription>How your blog post will appear to readers</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {post.coverImagePreview && (
+                  <img
+                    src={post.coverImagePreview}
+                    alt="Cover"
+                    className="w-full h-64 object-cover rounded-lg"
                   />
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold">{post.title || "Your Blog Title"}</h1>
+                  <p className="text-muted-foreground mt-2">{post.excerpt || "Your blog excerpt will appear here..."}</p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    placeholder="e.g., career, startup, tutorial (comma-separated)"
-                  />
+                <div className="flex flex-wrap gap-2">
+                  {post.category && (
+                    <Badge variant="default">{post.category}</Badge>
+                  )}
+                  {post.tags.map(tag => (
+                    <Badge key={tag} variant="outline">{tag}</Badge>
+                  ))}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="coverImage">Cover Image URL</Label>
-                <Input
-                  id="coverImage"
-                  type="url"
-                  value={formData.coverImage}
-                  onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                  placeholder="https://... (optional)"
-                />
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="submit"
-                  disabled={createPost.isPending}
-                  className="flex-1"
-                >
-                  {createPost.isPending ? "Submitting..." : "Submit Post"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setLocation("/blog")}
-                >
-                  Cancel
-                </Button>
-              </div>
-
-              <p className="text-sm text-muted-foreground text-center">
-                Your blog post will be reviewed by our moderation team before being published on the platform.
-              </p>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="prose prose-slate dark:prose-invert max-w-none">
+                  <div className="whitespace-pre-wrap">{post.content || "Your blog content will appear here..."}</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

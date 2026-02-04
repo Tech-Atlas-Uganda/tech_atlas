@@ -76,12 +76,6 @@ OWNER_NAME=Admin
 # Google Maps (Optional - only needed for map features)
 VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
-# Built-in APIs (Optional - for advanced features)
-BUILT_IN_FORGE_API_URL=https://api.manus.im
-BUILT_IN_FORGE_API_KEY=your-api-key-if-available
-VITE_FRONTEND_FORGE_API_URL=https://api.manus.im
-VITE_FRONTEND_FORGE_API_KEY=your-frontend-api-key
-
 # Analytics (Optional)
 VITE_ANALYTICS_ENDPOINT=
 VITE_ANALYTICS_WEBSITE_ID=
@@ -290,7 +284,7 @@ After setup, test these core features:
 
 ## Authentication Notes
 
-The local setup uses a simplified authentication system. In production, this integrates with Manus OAuth.
+The local setup uses a simplified authentication system. In production, this integrates with a custom OAuth implementation.
 
 **For local development:**
 - Authentication is handled through the `/api/oauth/callback` endpoint

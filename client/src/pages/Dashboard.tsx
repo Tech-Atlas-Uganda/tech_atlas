@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
 import { 
   Building2, 
@@ -13,7 +16,10 @@ import {
   GitFork,
   Star,
   TrendingUp,
-  Activity
+  Activity,
+  Plus,
+  Info,
+  CheckCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -42,13 +48,19 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [contributors, setContributors] = useState<GitHubContributor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSubmissionInfo, setShowSubmissionInfo] = useState(false);
 
-  const { data: hubs } = trpc.hubs.list.useQuery({ status: "approved" });
-  const { data: communities } = trpc.communities.list.useQuery({ status: "approved" });
-  const { data: startups } = trpc.startups.list.useQuery({ status: "approved" });
-  const { data: jobs } = trpc.jobs.list.useQuery({ status: "approved" });
-  const { data: events } = trpc.events.list.useQuery({ status: "approved" });
-  const { data: blogPosts } = trpc.blog.list.useQuery({});
+  const { user } = useAuth();
+
+  // Fetch real platform statistics from database
+  const { data: stats, isLoading: statsLoading, error: statsError } = trpc.stats.getCounts.useQuery();
+
+  // Show loading state or error state for stats
+  const getStatValue = (value: number | undefined) => {
+    if (statsLoading) return "...";
+    if (statsError) return "0";
+    return value || 0;
+  };
 
   useEffect(() => {
     // Fetch Uganda tech repos
@@ -78,13 +90,13 @@ export default function Dashboard() {
     fetchGitHubData();
   }, []);
 
-  const stats = [
-    { label: "Tech Hubs", value: hubs?.length || 0, icon: Building2, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { label: "Communities", value: communities?.length || 0, icon: Users, color: "text-purple-500", bgColor: "bg-purple-500/10" },
-    { label: "Startups", value: startups?.length || 0, icon: Rocket, color: "text-pink-500", bgColor: "bg-pink-500/10" },
-    { label: "Job Listings", value: jobs?.length || 0, icon: Briefcase, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { label: "Events", value: events?.length || 0, icon: Calendar, color: "text-orange-500", bgColor: "bg-orange-500/10" },
-    { label: "Blog Posts", value: blogPosts?.length || 0, icon: BookOpen, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
+  const dashboardStats = [
+    { label: "Tech Hubs", value: getStatValue(stats?.hubs), icon: Building2, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { label: "Communities", value: getStatValue(stats?.communities), icon: Users, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+    { label: "Startups", value: getStatValue(stats?.startups), icon: Rocket, color: "text-pink-500", bgColor: "bg-pink-500/10" },
+    { label: "Job Listings", value: getStatValue(stats?.jobs), icon: Briefcase, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { label: "Events", value: getStatValue(stats?.events), icon: Calendar, color: "text-orange-500", bgColor: "bg-orange-500/10" },
+    { label: "Blog Posts", value: getStatValue(stats?.blogPosts), icon: BookOpen, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
   ];
 
   const totalStars = repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
@@ -111,7 +123,7 @@ export default function Dashboard() {
 
         {/* Ecosystem Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {stats.map((stat, index) => {
+          {dashboardStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <motion.div
@@ -125,7 +137,9 @@ export default function Dashboard() {
                     <div className={`w-12 h-12 rounded-lg ${stat.bgColor} flex items-center justify-center mb-3`}>
                       <Icon className={`h-6 w-6 ${stat.color}`} />
                     </div>
-                    <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">
+                      {stat.value}
+                    </p>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                   </CardContent>
                 </Card>
@@ -204,11 +218,85 @@ export default function Dashboard() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <Github className="h-6 w-6 text-foreground" />
-            <h2 className="text-2xl font-bold text-foreground font-['Space_Grotesk']">
-              Featured Open Source Projects
-            </h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Github className="h-6 w-6 text-foreground" />
+              <h2 className="text-2xl font-bold text-foreground font-['Space_Grotesk']">
+                Featured Open Source Projects
+              </h2>
+            </div>
+            <Dialog open={showSubmissionInfo} onOpenChange={setShowSubmissionInfo}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Submit Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-3">
+                    <Github className="h-5 w-5 text-blue-500" />
+                    Submit Your Project
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Projects are curated by our moderators to showcase Uganda's best tech innovations.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-foreground">Requirements</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>Created by Ugandan developers</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>Open source with documentation</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>Active development</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>Community value</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <h3 className="font-semibold text-foreground mb-2">How to Submit</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Email us with your GitHub URL and project description:
+                    </p>
+                    <p className="text-sm font-medium text-blue-400">
+                      projects@techatlasug.com
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      className="flex-1" 
+                      onClick={() => window.open('mailto:projects@techatlas.ug?subject=Project Submission', '_blank')}
+                    >
+                      Send Email
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowSubmissionInfo(false)}>
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {loading ? (
