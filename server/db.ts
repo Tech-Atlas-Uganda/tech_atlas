@@ -18,6 +18,40 @@ import {
 } from "../drizzle/schema-simple";
 import { ENV } from './_core/env';
 
+// Helper function to get or create anonymous user ID
+async function getAnonymousUserId(db: any): Promise<number> {
+  try {
+    const anonymousUser = await db.select().from(users).where(eq(users.email, 'anonymous@techatlas.ug')).limit(1);
+    
+    if (anonymousUser.length === 0) {
+      // Create anonymous user
+      await db.insert(users).values({
+        openId: 'anonymous-user',
+        name: 'Anonymous User',
+        email: 'anonymous@techatlas.ug',
+        role: 'user',
+        loginMethod: 'anonymous',
+      });
+      
+      const newAnonymousUser = await db.select().from(users).where(eq(users.email, 'anonymous@techatlas.ug')).limit(1);
+      return newAnonymousUser[0]?.id || 1;
+    } else {
+      return anonymousUser[0].id;
+    }
+  } catch (error) {
+    console.warn('Could not create/find anonymous user, using ID 1:', error);
+    return 1; // Fallback to user ID 1
+  }
+}
+
+// Helper function to resolve createdBy for anonymous submissions
+async function resolveCreatedBy(db: any, createdBy: number | null | undefined): Promise<number> {
+  if (createdBy === 0 || createdBy === null || createdBy === undefined) {
+    return await getAnonymousUserId(db);
+  }
+  return createdBy;
+}
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
@@ -128,8 +162,45 @@ export async function updateUserProfile(userId: number, data: Partial<InsertUser
 export async function createHub(data: InsertHub) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(hubs).values(data);
-  return result;
+  
+  console.log('Creating hub with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    focusAreas: data.focusAreas || null,
+    location: data.location || null,
+    address: data.address || null,
+    latitude: data.latitude || null,
+    longitude: data.longitude || null,
+    email: data.email || null,
+    phone: data.phone || null,
+    website: data.website || null,
+    logo: data.logo || null,
+    verified: data.verified ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final hub data:', cleanData);
+  
+  try {
+    const result = await db.insert(hubs).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getHubs(filters?: { status?: string; verified?: boolean; limit?: number }) {
@@ -183,8 +254,47 @@ export async function deleteHub(id: number) {
 export async function createCommunity(data: InsertCommunity) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(communities).values(data);
-  return result;
+  
+  console.log('Creating community with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    focusAreas: data.focusAreas || null,
+    type: data.type || null,
+    location: data.location || null,
+    memberCount: data.memberCount || null,
+    email: data.email || null,
+    website: data.website || null,
+    slack: data.slack || null,
+    discord: data.discord || null,
+    telegram: data.telegram || null,
+    twitter: data.twitter || null,
+    logo: data.logo || null,
+    verified: data.verified ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final community data:', cleanData);
+  
+  try {
+    const result = await db.insert(communities).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getCommunities(filters?: { status?: string; limit?: number }) {
@@ -230,8 +340,49 @@ export async function deleteCommunity(id: number) {
 export async function createStartup(data: InsertStartup) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(startups).values(data);
-  return result;
+  
+  console.log('Creating startup with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    industry: data.industry || null,
+    focusAreas: data.focusAreas || null,
+    stage: data.stage || null,
+    founded: data.founded || null,
+    location: data.location || null,
+    latitude: data.latitude || null,
+    longitude: data.longitude || null,
+    teamSize: data.teamSize || null,
+    email: data.email || null,
+    website: data.website || null,
+    twitter: data.twitter || null,
+    linkedin: data.linkedin || null,
+    logo: data.logo || null,
+    verified: data.verified ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final startup data:', cleanData);
+  
+  try {
+    const result = await db.insert(startups).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getStartups(filters?: { status?: string; limit?: number }) {
@@ -277,8 +428,50 @@ export async function deleteStartup(id: number) {
 export async function createJob(data: InsertJob) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(jobs).values(data);
-  return result;
+  
+  console.log('Creating job with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    title: data.title,
+    slug: data.slug,
+    company: data.company,
+    description: data.description || null,
+    requirements: data.requirements || null,
+    responsibilities: data.responsibilities || null,
+    type: data.type,
+    location: data.location || null,
+    remote: data.remote ?? false,
+    skills: data.skills || null,
+    experienceLevel: data.experienceLevel || null,
+    salaryMin: data.salaryMin || null,
+    salaryMax: data.salaryMax || null,
+    currency: data.currency || 'UGX',
+    applicationUrl: data.applicationUrl || null,
+    applicationEmail: data.applicationEmail || null,
+    featured: data.featured ?? false,
+    expiresAt: data.expiresAt || null,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final job data:', cleanData);
+  
+  try {
+    const result = await db.insert(jobs).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getJobs(filters?: { status?: string; type?: string; remote?: boolean; limit?: number }) {

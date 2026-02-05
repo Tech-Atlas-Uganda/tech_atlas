@@ -1,0 +1,288 @@
+// Local in-memory database for development when Supabase is not available
+// This is a temporary solution for testing purposes
+
+interface LocalEntity {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  location?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  status: string;
+  createdAt: Date;
+  [key: string]: any;
+}
+
+class LocalDatabase {
+  private hubs: LocalEntity[] = [];
+  private communities: LocalEntity[] = [];
+  private startups: LocalEntity[] = [];
+  private nextId = 1;
+  private initialized = false;
+
+  // Sample data
+  constructor() {
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    if (this.initialized) return; // Prevent re-initialization
+    
+    console.log('🗄️ Initializing local database with sample data...');
+    
+    // Add some sample hubs
+    this.hubs = [
+      {
+        id: 1,
+        name: "Outbox Hub",
+        slug: "outbox-hub",
+        description: "Uganda's premier technology hub fostering innovation and entrepreneurship",
+        location: "Kampala",
+        email: "info@outbox.co.ug",
+        website: "https://outbox.co.ug",
+        status: "approved",
+        createdAt: new Date(),
+        verified: true,
+        focusAreas: ["Startups", "Innovation", "Technology"]
+      },
+      {
+        id: 2,
+        name: "Hive Colab",
+        slug: "hive-colab",
+        description: "East Africa's first technology hub supporting tech entrepreneurs",
+        location: "Kampala",
+        email: "info@hivecolab.org",
+        website: "https://hivecolab.org",
+        status: "approved",
+        createdAt: new Date(),
+        verified: true,
+        focusAreas: ["Technology", "Entrepreneurship", "Innovation"]
+      }
+    ];
+
+    // Add some sample communities
+    this.communities = [
+      {
+        id: 1,
+        name: "Python Uganda",
+        slug: "python-uganda",
+        description: "Uganda's Python programming community",
+        location: "Kampala",
+        email: "info@python.ug",
+        website: "https://python.ug",
+        status: "approved",
+        createdAt: new Date(),
+        verified: true,
+        focusAreas: ["Python", "Programming", "Software Development"],
+        type: "Programming Community"
+      }
+    ];
+
+    // Add some sample startups
+    this.startups = [
+      {
+        id: 1,
+        name: "SafeBoda",
+        slug: "safeboda",
+        description: "On-demand motorcycle taxi service across Africa",
+        location: "Kampala",
+        email: "hello@safeboda.com",
+        website: "https://safeboda.com",
+        status: "approved",
+        createdAt: new Date(),
+        verified: true,
+        focusAreas: ["Transportation", "Mobile App", "Logistics"],
+        industry: "Transportation",
+        stage: "Growth"
+      }
+    ];
+
+    this.nextId = 10; // Start from 10 to avoid conflicts
+    this.initialized = true;
+    
+    console.log(`✅ Local database initialized with ${this.hubs.length} hubs, ${this.communities.length} communities, ${this.startups.length} startups`);
+  }
+
+  // Hub operations
+  createHub(data: any): LocalEntity {
+    this.initializeSampleData(); // Ensure initialized
+    
+    const hub: LocalEntity = {
+      id: this.nextId++,
+      name: data.name,
+      slug: data.slug,
+      description: data.description || null,
+      location: data.location || null,
+      email: data.email || null,
+      phone: data.phone || null,
+      website: data.website || null,
+      status: data.status || 'approved',
+      createdAt: new Date(),
+      verified: data.verified || false,
+      focusAreas: data.focusAreas || [],
+      address: data.address || null,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null,
+      logo: data.logo || null,
+      createdBy: data.createdBy || 1,
+      approvedBy: data.approvedBy || null,
+      updatedAt: new Date(),
+      approvedAt: data.status === 'approved' ? new Date() : null
+    };
+    
+    this.hubs.push(hub);
+    console.log('✅ Created hub locally:', hub.name, '- Total hubs:', this.hubs.length);
+    return hub;
+  }
+
+  getHubs(filters?: { status?: string }): LocalEntity[] {
+    this.initializeSampleData(); // Ensure initialized
+    
+    let result = [...this.hubs];
+    
+    if (filters?.status) {
+      result = result.filter(h => h.status === filters.status);
+    }
+    
+    console.log(`📋 Returning ${result.length} hubs (filtered by status: ${filters?.status || 'all'})`);
+    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  getHubBySlug(slug: string): LocalEntity | undefined {
+    this.initializeSampleData(); // Ensure initialized
+    const hub = this.hubs.find(h => h.slug === slug);
+    console.log(`🔍 Looking for hub with slug "${slug}":`, hub ? 'Found' : 'Not found');
+    return hub;
+  }
+
+  // Community operations
+  createCommunity(data: any): LocalEntity {
+    this.initializeSampleData(); // Ensure initialized
+    
+    const community: LocalEntity = {
+      id: this.nextId++,
+      name: data.name,
+      slug: data.slug,
+      description: data.description || null,
+      location: data.location || null,
+      email: data.email || null,
+      website: data.website || null,
+      status: data.status || 'approved',
+      createdAt: new Date(),
+      verified: data.verified || false,
+      focusAreas: data.focusAreas || [],
+      type: data.type || null,
+      memberCount: data.memberCount || null,
+      slack: data.slack || null,
+      discord: data.discord || null,
+      telegram: data.telegram || null,
+      twitter: data.twitter || null,
+      logo: data.logo || null,
+      createdBy: data.createdBy || 1,
+      approvedBy: data.approvedBy || null,
+      updatedAt: new Date(),
+      approvedAt: data.status === 'approved' ? new Date() : null
+    };
+    
+    this.communities.push(community);
+    console.log('✅ Created community locally:', community.name, '- Total communities:', this.communities.length);
+    return community;
+  }
+
+  getCommunities(filters?: { status?: string }): LocalEntity[] {
+    this.initializeSampleData(); // Ensure initialized
+    
+    let result = [...this.communities];
+    
+    if (filters?.status) {
+      result = result.filter(c => c.status === filters.status);
+    }
+    
+    console.log(`📋 Returning ${result.length} communities (filtered by status: ${filters?.status || 'all'})`);
+    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  getCommunityBySlug(slug: string): LocalEntity | undefined {
+    this.initializeSampleData(); // Ensure initialized
+    const community = this.communities.find(c => c.slug === slug);
+    console.log(`🔍 Looking for community with slug "${slug}":`, community ? 'Found' : 'Not found');
+    return community;
+  }
+
+  // Startup operations
+  createStartup(data: any): LocalEntity {
+    this.initializeSampleData(); // Ensure initialized
+    
+    const startup: LocalEntity = {
+      id: this.nextId++,
+      name: data.name,
+      slug: data.slug,
+      description: data.description || null,
+      location: data.location || null,
+      email: data.email || null,
+      website: data.website || null,
+      status: data.status || 'approved',
+      createdAt: new Date(),
+      verified: data.verified || false,
+      focusAreas: data.focusAreas || [],
+      industry: data.industry || null,
+      stage: data.stage || null,
+      founded: data.founded || null,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null,
+      teamSize: data.teamSize || null,
+      twitter: data.twitter || null,
+      linkedin: data.linkedin || null,
+      logo: data.logo || null,
+      createdBy: data.createdBy || 1,
+      approvedBy: data.approvedBy || null,
+      updatedAt: new Date(),
+      approvedAt: data.status === 'approved' ? new Date() : null
+    };
+    
+    this.startups.push(startup);
+    console.log('✅ Created startup locally:', startup.name, '- Total startups:', this.startups.length);
+    return startup;
+  }
+
+  getStartups(filters?: { status?: string }): LocalEntity[] {
+    this.initializeSampleData(); // Ensure initialized
+    
+    let result = [...this.startups];
+    
+    if (filters?.status) {
+      result = result.filter(s => s.status === filters.status);
+    }
+    
+    console.log(`📋 Returning ${result.length} startups (filtered by status: ${filters?.status || 'all'})`);
+    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  getStartupBySlug(slug: string): LocalEntity | undefined {
+    this.initializeSampleData(); // Ensure initialized
+    const startup = this.startups.find(s => s.slug === slug);
+    console.log(`🔍 Looking for startup with slug "${slug}":`, startup ? 'Found' : 'Not found');
+    return startup;
+  }
+
+  // Debug method
+  getStats() {
+    this.initializeSampleData();
+    return {
+      hubs: this.hubs.length,
+      communities: this.communities.length,
+      startups: this.startups.length,
+      nextId: this.nextId
+    };
+  }
+}
+
+// Singleton instance
+const localDB = new LocalDatabase();
+
+export {
+  localDB,
+  type LocalEntity
+};

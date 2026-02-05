@@ -10,9 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { Building2, Users, Rocket, MapPin, Search, Plus, Map as MapIcon, List } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Building2, Users, Rocket, MapPin, Search, Plus, Map as MapIcon, List, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { MapView } from "@/components/Map";
+import { toast } from "sonner";
 
 type EntityType = "hub" | "community" | "startup";
 
@@ -44,6 +46,7 @@ interface Entity {
 }
 
 export default function Ecosystem() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("hubs");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -61,9 +64,15 @@ export default function Ecosystem() {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
-  const { data: hubs, isLoading: hubsLoading } = trpc.hubs.list.useQuery({ status: "approved" });
-  const { data: communities, isLoading: communitiesLoading } = trpc.communities.list.useQuery({ status: "approved" });
-  const { data: startups, isLoading: startupsLoading } = trpc.startups.list.useQuery({ status: "approved" });
+  // Show all approved content immediately (anonymous submissions are auto-approved)
+  const { data: hubs, isLoading: hubsLoading, refetch: refetchHubs } = trpc.hubs.list.useQuery({ status: "approved" });
+  const { data: communities, isLoading: communitiesLoading, refetch: refetchCommunities } = trpc.communities.list.useQuery({ status: "approved" });
+  const { data: startups, isLoading: startupsLoading, refetch: refetchStartups } = trpc.startups.list.useQuery({ status: "approved" });
+
+  // Submission mutations
+  const createHubMutation = trpc.hubs.create.useMutation();
+  const createCommunityMutation = trpc.communities.create.useMutation();
+  const createStartupMutation = trpc.startups.create.useMutation();
 
   const filterItems = (items: any[] | undefined, query: string, location: string) => {
     if (!items) return [];
@@ -111,23 +120,75 @@ export default function Ecosystem() {
     setSubmissionForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmissionSubmit = () => {
-    // Here you would typically send the data to your backend via TRPC
-    console.log('Submitting:', showSubmissionModal, submissionForm);
-    
-    // Reset form and close modal
-    setSubmissionForm({
-      name: '',
-      description: '',
-      location: '',
-      website: '',
-      email: '',
-      phone: '',
-    });
-    setShowSubmissionModal(null);
-    
-    // Show success message (you can implement toast notifications)
-    alert(`${showSubmissionModal} submitted successfully! It's now live on the platform. Moderators will review and remove any inappropriate content.`);
+  const handleSubmissionSubmit = async () => {
+    if (!submissionForm.name || !submissionForm.description || !submissionForm.location || !submissionForm.email) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const baseData = {
+        name: submissionForm.name,
+        description: submissionForm.description,
+        location: submissionForm.location,
+        email: submissionForm.email,
+        website: submissionForm.website || undefined,
+        phone: submissionForm.phone || undefined,
+      };
+
+      console.log('Submitting:', showSubmissionModal, baseData);
+
+      let result;
+      if (showSubmissionModal === 'hub') {
+        result = await createHubMutation.mutateAsync(baseData);
+        console.log('Hub created:', result);
+      } else if (showSubmissionModal === 'community') {
+        result = await createCommunityMutation.mutateAsync(baseData);
+        console.log('Community created:', result);
+      } else if (showSubmissionModal === 'startup') {
+        result = await createStartupMutation.mutateAsync(baseData);
+        console.log('Startup created:', result);
+      }
+
+      // Reset form and close modal
+      setSubmissionForm({
+        name: '',
+        description: '',
+        location: '',
+        website: '',
+        email: '',
+        phone: '',
+      });
+      setShowSubmissionModal(null);
+      
+      // Refetch data to show the new submission immediately
+      refetchHubs();
+      refetchCommunities();
+      refetchStartups();
+      
+      // Show success toast
+      toast.success(
+        `${showSubmissionModal?.charAt(0).toUpperCase()}${showSubmissionModal?.slice(1)} submitted successfully!`,
+        {
+          description: "Your submission is now live on the platform. Moderators will review and remove any inappropriate content.",
+          duration: 5000,
+          action: {
+            label: "View",
+            onClick: () => {
+              // Scroll to the relevant tab
+              setActiveTab(showSubmissionModal === 'hub' ? 'hubs' : showSubmissionModal === 'community' ? 'communities' : 'startups');
+            }
+          }
+        }
+      );
+      
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('Failed to submit', {
+        description: error.message || 'Please try again later.',
+        duration: 4000
+      });
+    }
   };
 
   const initializeMap = (map: google.maps.Map) => {
@@ -251,9 +312,11 @@ export default function Ecosystem() {
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
                 <CardTitle className="text-xl">{entity.name}</CardTitle>
-                {entity.verified && (
-                  <Badge variant="secondary" className="ml-2">Verified</Badge>
-                )}
+                <div className="flex items-center gap-2 ml-2">
+                  {entity.verified && (
+                    <Badge variant="secondary">Verified</Badge>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                 {entity.location && (
@@ -600,19 +663,24 @@ export default function Ecosystem() {
                 />
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Moderation Policy:</strong> Platform moderators will remove any submissions that are irrelevant, illegal, or violate our community guidelines. All listings are publicly visible once submitted.
+              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  <strong>Anonymous Submission:</strong> Your submission will appear immediately on the platform. Moderators will review and remove any inappropriate, duplicate, or irrelevant content.
                 </p>
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button 
                   onClick={handleSubmissionSubmit}
-                  disabled={!submissionForm.name || !submissionForm.description || !submissionForm.location || !submissionForm.email}
+                  disabled={!submissionForm.name || !submissionForm.description || !submissionForm.location || !submissionForm.email || createHubMutation.isLoading || createCommunityMutation.isLoading || createStartupMutation.isLoading}
                   className="flex-1"
                 >
-                  Submit Anonymously
+                  {(createHubMutation.isLoading || createCommunityMutation.isLoading || createStartupMutation.isLoading) ? 'Submitting...' : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Submit & Publish
+                    </>
+                  )}
                 </Button>
                 <Button variant="outline" onClick={() => setShowSubmissionModal(null)}>
                   Cancel
