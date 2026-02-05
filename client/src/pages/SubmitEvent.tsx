@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Calendar, Award } from "lucide-react";
+import { ArrowLeft, Calendar, Award, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CORE_CATEGORIES } from "../../../shared/const";
 
@@ -17,6 +17,8 @@ export default function SubmitEvent() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [submissionType, setSubmissionType] = useState<"event" | "opportunity">("event");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,6 +49,80 @@ export default function SubmitEvent() {
     }
   }, []);
 
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select a valid image file");
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  // Generate default image as data URL
+  const generateDefaultImage = (type: "event" | "opportunity"): string => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d')!;
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 400, 300);
+    if (type === 'event') {
+      gradient.addColorStop(0, '#FCD34D'); // Yellow
+      gradient.addColorStop(1, '#F59E0B'); // Amber
+    } else {
+      gradient.addColorStop(0, '#34D399'); // Green
+      gradient.addColorStop(1, '#059669'); // Emerald
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 400, 300);
+
+    // Add pattern/texture
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    for (let i = 0; i < 20; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * 400, Math.random() * 300, Math.random() * 30, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Add Tech Atlas text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TECH ATLAS', 200, 120);
+    
+    ctx.font = '18px Arial, sans-serif';
+    ctx.fillText(type.toUpperCase(), 200, 150);
+    
+    // Add icon
+    ctx.font = '48px Arial, sans-serif';
+    ctx.fillText(type === 'event' ? '📅' : '🏆', 200, 200);
+
+    return canvas.toDataURL('image/png');
+  };
+
   const createEvent = trpc.events.create.useMutation({
     onSuccess: () => {
       toast.success("Event submitted successfully!");
@@ -67,7 +143,7 @@ export default function SubmitEvent() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim()) {
@@ -75,14 +151,26 @@ export default function SubmitEvent() {
       return;
     }
 
+    // Handle image - either uploaded file or generate default
+    let imageUrl = "";
+    if (imageFile) {
+      // In a real implementation, you would upload the file to a storage service
+      // For now, we'll use the preview URL or indicate that an image was uploaded
+      imageUrl = imagePreview || "";
+      toast.info("Image upload functionality will be implemented with storage service");
+    } else {
+      // Generate default image
+      imageUrl = generateDefaultImage(submissionType);
+    }
+
     const baseData = {
       title: formData.title,
       description: formData.description || undefined,
       type: formData.type || undefined,
       category: formData.category || undefined,
-      url: formData.url || undefined,
       tags: formData.tags ? formData.tags.split(",").map(s => s.trim()) : undefined,
       submitterName: formData.submitterName || undefined,
+      imageUrl: imageUrl || undefined, // Add image URL to submission
     };
 
     if (submissionType === "event") {
@@ -97,6 +185,8 @@ export default function SubmitEvent() {
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
         location: formData.location || undefined,
         virtual: formData.virtual,
+        meetingUrl: formData.virtual ? formData.url : undefined,
+        registrationUrl: !formData.virtual ? formData.url : undefined,
         organizer: formData.organizer || undefined,
         capacity: formData.capacity ? Number(formData.capacity) : undefined,
       });
@@ -106,6 +196,7 @@ export default function SubmitEvent() {
         provider: formData.provider || undefined,
         amount: formData.amount || undefined,
         currency: formData.currency || undefined,
+        applicationUrl: formData.url || undefined,
         deadline: formData.deadline ? new Date(formData.deadline) : undefined,
       });
     }
@@ -156,23 +247,6 @@ export default function SubmitEvent() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Submission Type Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="submissionType">Submission Type</Label>
-                <Select 
-                  value={submissionType} 
-                  onValueChange={(value: "event" | "opportunity") => setSubmissionType(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="event">Event - Meetups, conferences, workshops</SelectItem>
-                    <SelectItem value="opportunity">Opportunity - Grants, fellowships, competitions</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">{submissionType === 'event' ? 'Event' : 'Opportunity'} Title *</Label>
@@ -198,6 +272,70 @@ export default function SubmitEvent() {
                   }
                   rows={4}
                 />
+              </div>
+
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="image">Flyer/Image (Optional)</Label>
+                <div className="space-y-4">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-full max-w-md h-48 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">
+                        Upload a flyer or image for your {submissionType}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-4">
+                        PNG, JPG up to 5MB. If no image is provided, we'll generate a default one.
+                      </p>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                      >
+                        Choose Image
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Preview of default image */}
+                  {!imagePreview && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-600 mb-2">Default image preview:</p>
+                      <img 
+                        src={generateDefaultImage(submissionType)} 
+                        alt="Default preview" 
+                        className="w-full max-w-md h-48 object-cover rounded-lg border opacity-75"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        This default image will be used if you don't upload one
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Type and Category */}

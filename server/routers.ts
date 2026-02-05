@@ -16,10 +16,34 @@ function generateSlug(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-// Admin-only procedure
+// Role-based procedures
+const moderatorProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const allowedRoles = ['moderator', 'editor', 'admin', 'core_admin'];
+  if (!allowedRoles.includes(ctx.user.role)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Moderator access or higher required' });
+  }
+  return next({ ctx });
+});
+
+const editorProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const allowedRoles = ['editor', 'admin', 'core_admin'];
+  if (!allowedRoles.includes(ctx.user.role)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Editor access or higher required' });
+  }
+  return next({ ctx });
+});
+
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'admin' && ctx.user.role !== 'moderator') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin or moderator access required' });
+  const allowedRoles = ['admin', 'core_admin'];
+  if (!allowedRoles.includes(ctx.user.role)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access or higher required' });
+  }
+  return next({ ctx });
+});
+
+const coreAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'core_admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Core admin access required' });
   }
   return next({ ctx });
 });
@@ -316,7 +340,6 @@ export const appRouter = router({
         requirements: z.string().optional(),
         responsibilities: z.string().optional(),
         type: z.enum(['full-time', 'part-time', 'internship', 'contract']),
-        category: z.string().optional(),
         location: z.string().optional(),
         remote: z.boolean().optional(),
         skills: z.array(z.string()).optional(),
@@ -326,10 +349,6 @@ export const appRouter = router({
         currency: z.string().optional(),
         applicationUrl: z.string().optional(),
         applicationEmail: z.string().optional(),
-        companyWebsite: z.string().optional(),
-        latitude: z.string().optional(),
-        longitude: z.string().optional(),
-        submitterName: z.string().optional(),
         expiresAt: z.date().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -539,9 +558,12 @@ export const appRouter = router({
         startDate: z.date(),
         endDate: z.date().optional(),
         location: z.string().optional(),
+        address: z.string().optional(),
         virtual: z.boolean().optional(),
-        url: z.string().optional(),
+        meetingUrl: z.string().optional(),
+        registrationUrl: z.string().optional(),
         organizer: z.string().optional(),
+        organizerEmail: z.string().optional(),
         capacity: z.number().optional(),
         tags: z.array(z.string()).optional(),
       }))
@@ -609,8 +631,9 @@ export const appRouter = router({
         provider: z.string().optional(),
         amount: z.string().optional(),
         currency: z.string().optional(),
+        eligibility: z.string().optional(),
+        applicationUrl: z.string().optional(),
         deadline: z.date().optional(),
-        url: z.string().optional(),
         tags: z.array(z.string()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -818,13 +841,42 @@ export const appRouter = router({
 
   // Admin functions
   admin: router({
-    getPendingContent: adminProcedure.query(async () => {
+    getPendingContent: moderatorProcedure.query(async () => {
       return await db.getPendingContent();
     }),
     
-    getStats: adminProcedure.query(async () => {
+    getStats: moderatorProcedure.query(async () => {
       return await db.getContentStats();
     }),
+
+    // Role management (Core Admin only)
+    getRoleHierarchy: coreAdminProcedure.query(async () => {
+      // This would fetch from role_hierarchy table
+      return [
+        { roleName: 'user', displayName: 'Community Member', level: 1 },
+        { roleName: 'contributor', displayName: 'Content Contributor', level: 2 },
+        { roleName: 'moderator', displayName: 'Content Moderator', level: 3 },
+        { roleName: 'editor', displayName: 'Content Editor', level: 4 },
+        { roleName: 'admin', displayName: 'Platform Administrator', level: 5 },
+        { roleName: 'core_admin', displayName: 'Core Administrator', level: 6 },
+      ];
+    }),
+
+    getAllUsers: adminProcedure.query(async () => {
+      return await db.getAllUsers();
+    }),
+
+    updateUserRole: coreAdminProcedure
+      .input(z.object({
+        userId: z.number(),
+        newRole: z.enum(['user', 'contributor', 'moderator', 'editor', 'admin', 'core_admin']),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Update user role and log the change
+        await db.updateUserRole(input.userId, input.newRole, ctx.user.id, input.reason);
+        return { success: true };
+      }),
 
     // Analytics dashboard
     getAnalytics: adminProcedure

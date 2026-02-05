@@ -1,5 +1,6 @@
 import { eq, and, or, like, desc, asc, sql, gte, lte } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { 
   InsertUser, users,
   hubs, InsertHub, Hub,
@@ -14,7 +15,7 @@ import {
   events, InsertEvent, Event,
   opportunities, InsertOpportunity, Opportunity,
   blogPosts, InsertBlogPost, BlogPost
-} from "../drizzle/schema";
+} from "../drizzle/schema-simple";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -22,7 +23,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -681,6 +683,250 @@ export async function getAllUsers() {
   
   const result = await db.select().from(users);
   return result;
+}
+
+// ===== ROLE MANAGEMENT =====
+
+export async function getRoleHierarchy() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const result = await db.execute(sql`
+      SELECT roleName, displayName, description, level, permissions, canAssignRoles
+      FROM role_hierarchy
+      ORDER BY level ASC
+    `);
+    return result.rows;
+  } catch (error) {
+    console.warn("Role hierarchy table not found, returning default roles:", error);
+    // Return default role hierarchy if table doesn't exist
+    return [
+      { roleName: 'user', displayName: 'Community Member', level: 1 },
+      { roleName: 'contributor', displayName: 'Content Contributor', level: 2 },
+      { roleName: 'moderator', displayName: 'Content Moderator', level: 3 },
+      { roleName: 'editor', displayName: 'Content Editor', level: 4 },
+      { roleName: 'admin', displayName: 'Platform Administrator', level: 5 },
+      { roleName: 'core_admin', displayName: 'Core Administrator', level: 6 },
+    ];
+  }
+}
+
+export async function getAllUsersWithRoles(filters?: { role?: string; isActive?: boolean; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    let query = `
+      SELECT id, name, email, role, isActive, roleAssignedAt, assignedBy, createdAt
+      FROM users
+      WHERE 1=1
+    `;
+    
+    const params: any[] = [];
+    
+    if (filters?.role) {
+      query += ` AND role = $${params.length + 1}`;
+      params.push(filters.role);
+    }
+    
+    if (filters?.isActive !== undefined) {
+      query += ` AND isActive = $${params.length + 1}`;
+      params.push(filters.isActive);
+    }
+    
+    query += ` ORDER BY createdAt DESC`;
+    
+    if (filters?.limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(filters.limit);
+    }
+
+    const result = await db.execute(sql.raw(query, params));
+    return result.rows;
+  } catch (error) {
+    console.warn("Error fetching users with roles:", error);
+    // Fallback to basic user query
+    const result = await db.select().from(users);
+    return result.map(user => ({
+      ...user,
+      isActive: true, // Default to active if column doesn't exist
+    }));
+  }
+}
+
+export async function logRoleChange(data: {
+  userId: number;
+  newRole: string;
+  assignedBy: number;
+  reason?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get current user data
+  const currentUser = await getUserById(data.userId);
+  if (!currentUser) throw new Error("User not found");
+
+  try {
+    await db.execute(sql`
+      INSERT INTO role_audit_log (userId, previousRole, newRole, assignedBy, reason, createdAt)
+      VALUES (${data.userId}, ${currentUser.role}, ${data.newRole}, ${data.assignedBy}, ${data.reason || null}, NOW())
+    `);
+  } catch (error) {
+    console.warn("Could not log role change - audit table may not exist:", error);
+  }
+
+  return { success: true };
+}
+
+export async function updateUserRole(userId: number, newRole: string, assignedBy: number, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get current user data
+  const currentUser = await getUserById(userId);
+  if (!currentUser) throw new Error("User not found");
+
+  // Update user role
+  await db.update(users).set({
+    role: newRole as any,
+  }).where(eq(users.id, userId));
+
+  // Try to update additional role fields if they exist
+  try {
+    await db.execute(sql`
+      UPDATE users SET 
+        roleAssignedAt = NOW(),
+        assignedBy = ${assignedBy}
+      WHERE id = ${userId}
+    `);
+  } catch (error) {
+    console.warn("Could not update role metadata - columns may not exist:", error);
+  }
+
+  // Log the role change
+  await logRoleChange({
+    userId,
+    newRole,
+    assignedBy,
+    reason,
+  });
+
+  return { success: true };
+}
+
+export async function deactivateUser(userId: number, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db.execute(sql`
+      UPDATE users SET isActive = false WHERE id = ${userId}
+    `);
+  } catch (error) {
+    console.warn("Could not deactivate user - isActive column may not exist:", error);
+    // For now, we could change their role to 'inactive' or similar
+    await db.update(users).set({
+      role: 'inactive' as any,
+    }).where(eq(users.id, userId));
+  }
+
+  return { success: true };
+}
+
+export async function getRoleAuditLog(filters?: { userId?: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    let query = `
+      SELECT id, userId, previousRole, newRole, assignedBy, reason, createdAt
+      FROM role_audit_log
+      WHERE 1=1
+    `;
+    
+    const params: any[] = [];
+    
+    if (filters?.userId) {
+      query += ` AND userId = $${params.length + 1}`;
+      params.push(filters.userId);
+    }
+    
+    query += ` ORDER BY createdAt DESC`;
+    
+    if (filters?.limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(filters.limit);
+    }
+
+    const result = await db.execute(sql.raw(query, params));
+    return result.rows;
+  } catch (error) {
+    console.warn("Role audit log table not found:", error);
+    return [];
+  }
+}
+
+export async function getModerationLog(filters?: { moderatorId?: number; targetType?: string; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    let query = `
+      SELECT id, moderatorId, action, targetType, targetId, reason, metadata, createdAt
+      FROM moderation_log
+      WHERE 1=1
+    `;
+    
+    const params: any[] = [];
+    
+    if (filters?.moderatorId) {
+      query += ` AND moderatorId = $${params.length + 1}`;
+      params.push(filters.moderatorId);
+    }
+    
+    if (filters?.targetType) {
+      query += ` AND targetType = $${params.length + 1}`;
+      params.push(filters.targetType);
+    }
+    
+    query += ` ORDER BY createdAt DESC`;
+    
+    if (filters?.limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(filters.limit);
+    }
+
+    const result = await db.execute(sql.raw(query, params));
+    return result.rows;
+  } catch (error) {
+    console.warn("Moderation log table not found:", error);
+    return [];
+  }
+}
+
+export async function logModerationAction(data: {
+  moderatorId: number;
+  action: string;
+  targetType: string;
+  targetId: number;
+  reason?: string;
+  metadata?: any;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db.execute(sql`
+      INSERT INTO moderation_log (moderatorId, action, targetType, targetId, reason, metadata, createdAt)
+      VALUES (${data.moderatorId}, ${data.action}, ${data.targetType}, ${data.targetId}, ${data.reason || null}, ${JSON.stringify(data.metadata) || null}, NOW())
+    `);
+  } catch (error) {
+    console.warn("Could not log moderation action - table may not exist:", error);
+  }
+
+  return { success: true };
 }
 
 

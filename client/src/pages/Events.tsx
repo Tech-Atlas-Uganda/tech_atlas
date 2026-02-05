@@ -14,9 +14,13 @@ import { motion } from "framer-motion";
 export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [opportunityTypeFilter, setOpportunityTypeFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("upcoming");
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
+  const [organizerFilter, setOrganizerFilter] = useState<string>("all");
 
   const { data: events, isLoading: eventsLoading } = trpc.events.list.useQuery({ status: "approved" });
   const { data: opportunities, isLoading: opportunitiesLoading } = trpc.opportunities.list.useQuery({ status: "approved" });
@@ -36,7 +40,8 @@ export default function Events() {
         item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.organizer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.provider?.toLowerCase().includes(searchQuery.toLowerCase())
+        item.provider?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -45,10 +50,24 @@ export default function Events() {
       filtered = filtered.filter(item => item.itemType === activeTab);
     }
 
-    // Filter by type
-    if (typeFilter !== "all") {
+    // Filter by event type (only for events)
+    if (eventTypeFilter !== "all") {
       filtered = filtered.filter(item => 
-        item.type === typeFilter
+        item.itemType !== "event" || item.type === eventTypeFilter
+      );
+    }
+
+    // Filter by opportunity type (only for opportunities)
+    if (opportunityTypeFilter !== "all") {
+      filtered = filtered.filter(item => 
+        item.itemType !== "opportunity" || item.type === opportunityTypeFilter
+      );
+    }
+
+    // Filter by category
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(item => 
+        item.category === categoryFilter
       );
     }
 
@@ -59,6 +78,44 @@ export default function Events() {
       filtered = filtered.filter(item => 
         item.location?.toLowerCase().includes(locationFilter.toLowerCase())
       );
+    }
+
+    // Filter by organizer/provider
+    if (organizerFilter !== "all") {
+      filtered = filtered.filter(item => 
+        (item.organizer && item.organizer.toLowerCase().includes(organizerFilter.toLowerCase())) ||
+        (item.provider && item.provider.toLowerCase().includes(organizerFilter.toLowerCase()))
+      );
+    }
+
+    // Filter by date range
+    if (dateRangeFilter !== "all") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const nextMonth = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      filtered = filtered.filter(item => {
+        const itemDate = item.itemType === "event" 
+          ? (item.startDate ? new Date(item.startDate) : null)
+          : (item.deadline ? new Date(item.deadline) : null);
+        
+        if (!itemDate) return false;
+
+        switch (dateRangeFilter) {
+          case "today":
+            return itemDate >= today && itemDate < tomorrow;
+          case "tomorrow":
+            return itemDate >= tomorrow && itemDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000);
+          case "this-week":
+            return itemDate >= today && itemDate < nextWeek;
+          case "this-month":
+            return itemDate >= today && itemDate < nextMonth;
+          default:
+            return true;
+        }
+      });
     }
 
     // Filter by status
@@ -87,7 +144,7 @@ export default function Events() {
   const filteredEvents = filteredItems.filter(item => item.itemType === "event");
   const filteredOpportunities = filteredItems.filter(item => item.itemType === "opportunity");
 
-  // Get unique locations for filter
+  // Get unique values for filters
   const uniqueLocations = Array.from(new Set(
     allItems
       .map(item => item.location)
@@ -95,10 +152,39 @@ export default function Events() {
       .map(loc => loc.toLowerCase())
   )).sort();
 
-  // Get unique types for filter
-  const uniqueTypes = Array.from(new Set(
-    allItems.map(item => item.type).filter(Boolean)
+  const uniqueEventTypes = Array.from(new Set(
+    (events || []).map(event => event.type).filter(Boolean)
   )).sort();
+
+  const uniqueOpportunityTypes = Array.from(new Set(
+    (opportunities || []).map(opportunity => opportunity.type).filter(Boolean)
+  )).sort();
+
+  const uniqueCategories = Array.from(new Set(
+    allItems.map(item => item.category).filter(Boolean)
+  )).sort();
+
+  const uniqueOrganizers = Array.from(new Set([
+    ...(events || []).map(event => event.organizer).filter(Boolean),
+    ...(opportunities || []).map(opportunity => opportunity.provider).filter(Boolean)
+  ])).sort();
+
+  // Clear filters function
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setEventTypeFilter("all");
+    setOpportunityTypeFilter("all");
+    setCategoryFilter("all");
+    setLocationFilter("all");
+    setStatusFilter("upcoming");
+    setDateRangeFilter("all");
+    setOrganizerFilter("all");
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = searchQuery || eventTypeFilter !== "all" || opportunityTypeFilter !== "all" || 
+    categoryFilter !== "all" || locationFilter !== "all" || statusFilter !== "upcoming" || 
+    dateRangeFilter !== "all" || organizerFilter !== "all";
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -205,54 +291,205 @@ export default function Events() {
           </div>
 
           {/* Filters */}
-          <div className="grid md:grid-cols-5 gap-4">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search events and opportunities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          <div className="space-y-4">
+            {/* Search and Clear Filters */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events and opportunities..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {hasActiveFilters && (
+                <Button variant="outline" onClick={clearAllFilters}>
+                  Clear All Filters
+                </Button>
+              )}
             </div>
-            
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {uniqueTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="virtual">Virtual</SelectItem>
-                {uniqueLocations.map(location => (
-                  <SelectItem key={location} value={location}>
-                    {location.charAt(0).toUpperCase() + location.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Main Filters Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Event Type Filter - Only show when on events tab or all tab */}
+              {(activeTab === "all" || activeTab === "event") && (
+                <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Event Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Event Types</SelectItem>
+                    {uniqueEventTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="past">Past</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Opportunity Type Filter - Only show when on opportunities tab or all tab */}
+              {(activeTab === "all" || activeTab === "opportunity") && (
+                <Select value={opportunityTypeFilter} onValueChange={setOpportunityTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opportunity Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Opportunity Types</SelectItem>
+                    {uniqueOpportunityTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Category Filter */}
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {uniqueCategories.map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Location Filter */}
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="virtual">Virtual</SelectItem>
+                  {uniqueLocations.map(location => (
+                    <SelectItem key={location} value={location}>
+                      {location.charAt(0).toUpperCase() + location.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="past">Past</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Date Range Filter */}
+              <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Dates</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                  <SelectItem value="this-week">This Week</SelectItem>
+                  <SelectItem value="this-month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Secondary Filters Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Organizer/Provider Filter */}
+              <Select value={organizerFilter} onValueChange={setOrganizerFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Organizer/Provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Organizers</SelectItem>
+                  {uniqueOrganizers.map(organizer => (
+                    <SelectItem key={organizer} value={organizer}>{organizer}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Results Count */}
+              <div className="flex items-center text-sm text-muted-foreground">
+                Showing {filteredItems.length} of {allItems.length} items
+                {hasActiveFilters && " (filtered)"}
+              </div>
+            </div>
+
+            {/* Active Filters Summary */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Active filters:</span>
+                {searchQuery && (
+                  <Badge variant="secondary" className="gap-1">
+                    Search: "{searchQuery}"
+                    <button onClick={() => setSearchQuery("")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {eventTypeFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Event: {eventTypeFilter}
+                    <button onClick={() => setEventTypeFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {opportunityTypeFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Opportunity: {opportunityTypeFilter}
+                    <button onClick={() => setOpportunityTypeFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {categoryFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Category: {categoryFilter}
+                    <button onClick={() => setCategoryFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {locationFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Location: {locationFilter === "virtual" ? "Virtual" : locationFilter.charAt(0).toUpperCase() + locationFilter.slice(1)}
+                    <button onClick={() => setLocationFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {statusFilter !== "upcoming" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {statusFilter}
+                    <button onClick={() => setStatusFilter("upcoming")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {dateRangeFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Date: {dateRangeFilter.replace("-", " ")}
+                    <button onClick={() => setDateRangeFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {organizerFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Organizer: {organizerFilter}
+                    <button onClick={() => setOrganizerFilter("all")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -300,8 +537,16 @@ export default function Events() {
                         }`}>
                           <CardHeader>
                             <div className="flex flex-col md:flex-row gap-6">
-                              {/* Date/Status Box */}
-                              {item.itemType === 'event' ? (
+                              {/* Image or Date/Status Box */}
+                              {item.imageUrl ? (
+                                <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                                  <img 
+                                    src={item.imageUrl} 
+                                    alt={item.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ) : item.itemType === 'event' ? (
                                 <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex flex-col items-center justify-center text-white">
                                   <div className="text-2xl font-bold">
                                     {item.startDate ? new Date(item.startDate).getDate() : '?'}
@@ -444,15 +689,25 @@ export default function Events() {
                         }`}>
                           <CardHeader>
                             <div className="flex flex-col md:flex-row gap-6">
-                              {/* Date Box */}
-                              <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-lg flex flex-col items-center justify-center text-white">
-                                <div className="text-2xl font-bold">
-                                  {event.startDate ? new Date(event.startDate).getDate() : '?'}
+                              {/* Image or Date Box */}
+                              {event.imageUrl ? (
+                                <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                                  <img 
+                                    src={event.imageUrl} 
+                                    alt={event.title}
+                                    className="w-full h-full object-cover"
+                                  />
                                 </div>
-                                <div className="text-xs uppercase">
-                                  {event.startDate ? new Date(event.startDate).toLocaleDateString("en-US", { month: "short" }) : 'TBD'}
+                              ) : (
+                                <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-lg flex flex-col items-center justify-center text-white">
+                                  <div className="text-2xl font-bold">
+                                    {event.startDate ? new Date(event.startDate).getDate() : '?'}
+                                  </div>
+                                  <div className="text-xs uppercase">
+                                    {event.startDate ? new Date(event.startDate).toLocaleDateString("en-US", { month: "short" }) : 'TBD'}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
 
                               {/* Event Details */}
                               <div className="flex-1">
@@ -545,6 +800,16 @@ export default function Events() {
                         <Card className={`h-full hover:shadow-lg transition-all hover:border-primary/50 ${
                           opportunity.deadline && isExpired(opportunity.deadline) ? 'opacity-60' : ''
                         }`}>
+                          {/* Image */}
+                          {opportunity.imageUrl && (
+                            <div className="w-full h-32 overflow-hidden rounded-t-lg">
+                              <img 
+                                src={opportunity.imageUrl} 
+                                alt={opportunity.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
                           <CardHeader>
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">

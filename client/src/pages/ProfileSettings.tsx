@@ -6,25 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { 
   User, 
-  Mail, 
   MapPin, 
   Globe, 
-  Github, 
-  Linkedin, 
-  Twitter,
   Camera,
   Plus,
   X,
   Save,
-  Eye,
-  EyeOff
+  Eye
 } from "lucide-react";
+import { CORE_CATEGORIES } from "../../../shared/const";
 
 interface UserProfile {
   name: string;
@@ -37,6 +34,7 @@ interface UserProfile {
   twitter: string;
   skills: string[];
   interests: string[];
+  categories: string[];
   profilePicture: string;
   isPublicProfile: boolean;
   showInDirectory: boolean;
@@ -55,12 +53,14 @@ export default function ProfileSettings() {
     twitter: "",
     skills: [],
     interests: [],
+    categories: [],
     profilePicture: "",
     isPublicProfile: true,
     showInDirectory: true,
   });
   const [newSkill, setNewSkill] = useState("");
   const [newInterest, setNewInterest] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -78,6 +78,7 @@ export default function ProfileSettings() {
         twitter: user.user_metadata?.twitter || "",
         skills: user.user_metadata?.skills || [],
         interests: user.user_metadata?.interests || [],
+        categories: user.user_metadata?.categories || [],
         profilePicture: user.user_metadata?.profile_picture || "",
         isPublicProfile: user.user_metadata?.is_public_profile ?? true,
         showInDirectory: user.user_metadata?.show_in_directory ?? true,
@@ -120,6 +121,23 @@ export default function ProfileSettings() {
     setProfile(prev => ({
       ...prev,
       interests: prev.interests.filter(i => i !== interest)
+    }));
+  };
+
+  const addCategory = () => {
+    if (selectedCategory && !profile.categories.includes(selectedCategory)) {
+      setProfile(prev => ({
+        ...prev,
+        categories: [...prev.categories, selectedCategory]
+      }));
+      setSelectedCategory("");
+    }
+  };
+
+  const removeCategory = (category: string) => {
+    setProfile(prev => ({
+      ...prev,
+      categories: prev.categories.filter(c => c !== category)
     }));
   };
 
@@ -252,6 +270,44 @@ export default function ProfileSettings() {
                     </div>
                   </div>
 
+                  {/* Categories */}
+                  <div className="space-y-3">
+                    <Label>Professional Categories</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Select categories that best describe your professional focus areas
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.categories.map((category) => (
+                        <Badge key={category} variant="default" className="flex items-center gap-1">
+                          {category}
+                          <button
+                            onClick={() => removeCategory(category)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select a category to add..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CORE_CATEGORIES.filter(cat => !profile.categories.includes(cat)).map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={addCategory} size="sm" disabled={!selectedCategory}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* Skills */}
                   <div className="space-y-3">
                     <Label>Skills & Technologies</Label>
@@ -273,7 +329,7 @@ export default function ProfileSettings() {
                         value={newSkill}
                         onChange={(e) => setNewSkill(e.target.value)}
                         placeholder="Add a skill (e.g., React, Python, Design)"
-                        onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                        onKeyDown={(e) => e.key === "Enter" && addSkill()}
                       />
                       <Button onClick={addSkill} size="sm">
                         <Plus className="h-4 w-4" />
@@ -302,7 +358,7 @@ export default function ProfileSettings() {
                         value={newInterest}
                         onChange={(e) => setNewInterest(e.target.value)}
                         placeholder="Add an interest (e.g., AI, Startups, Music)"
-                        onKeyPress={(e) => e.key === "Enter" && addInterest()}
+                        onKeyDown={(e) => e.key === "Enter" && addInterest()}
                       />
                       <Button onClick={addInterest} size="sm">
                         <Plus className="h-4 w-4" />
@@ -342,7 +398,7 @@ export default function ProfileSettings() {
                   <div className="space-y-2">
                     <Label htmlFor="github">GitHub</Label>
                     <div className="relative">
-                      <Github className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="github"
                         value={profile.github}
@@ -356,7 +412,7 @@ export default function ProfileSettings() {
                   <div className="space-y-2">
                     <Label htmlFor="linkedin">LinkedIn</Label>
                     <div className="relative">
-                      <Linkedin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="linkedin"
                         value={profile.linkedin}
@@ -370,7 +426,7 @@ export default function ProfileSettings() {
                   <div className="space-y-2">
                     <Label htmlFor="twitter">Twitter</Label>
                     <div className="relative">
-                      <Twitter className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="twitter"
                         value={profile.twitter}

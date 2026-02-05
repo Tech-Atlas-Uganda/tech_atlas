@@ -131,8 +131,29 @@ export default function Sidebar() {
               );
             })}
 
-            {/* Admin Link */}
-            {user?.user_metadata?.role === "admin" && (
+            {/* Role-based Admin Links */}
+            {user?.user_metadata?.role === "core_admin" && (
+              <Link href="/core-admin">
+                <a onClick={() => setIsMobileOpen(false)}>
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                      ${location === "/core-admin"
+                        ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      }
+                    `}
+                  >
+                    <Settings className="h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">Core Admin</span>
+                  </motion.div>
+                </a>
+              </Link>
+            )}
+
+            {(user?.user_metadata?.role === "admin" || user?.user_metadata?.role === "core_admin") && (
               <Link href="/admin">
                 <a onClick={() => setIsMobileOpen(false)}>
                   <motion.div
@@ -152,6 +173,48 @@ export default function Sidebar() {
                 </a>
               </Link>
             )}
+
+            {(["editor", "admin", "core_admin"].includes(user?.user_metadata?.role)) && (
+              <Link href="/editor">
+                <a onClick={() => setIsMobileOpen(false)}>
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                      ${location === "/editor"
+                        ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      }
+                    `}
+                  >
+                    <BookOpen className="h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">Editor</span>
+                  </motion.div>
+                </a>
+              </Link>
+            )}
+
+            {(["moderator", "editor", "admin", "core_admin"].includes(user?.user_metadata?.role)) && (
+              <Link href="/moderator">
+                <a onClick={() => setIsMobileOpen(false)}>
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                      ${location === "/moderator"
+                        ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      }
+                    `}
+                  >
+                    <Users className="h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">Moderator</span>
+                  </motion.div>
+                </a>
+              </Link>
+            )}
           </nav>
 
           {/* User Section */}
@@ -164,7 +227,6 @@ export default function Sidebar() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{user.user_metadata?.name || user.email?.split('@')[0] || "User"}</p>
-                    <p className="text-xs text-slate-400 truncate">{user.email}</p>
                   </div>
                 </div>
                 <Link href="/profile/settings">

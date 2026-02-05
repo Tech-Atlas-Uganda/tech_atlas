@@ -9,12 +9,24 @@ interface ProtectedRouteProps {
   children: ReactNode;
   fallback?: ReactNode;
   requireAdmin?: boolean;
+  requireRole?: 'user' | 'contributor' | 'moderator' | 'editor' | 'admin' | 'core_admin';
 }
+
+// Role hierarchy levels
+const ROLE_LEVELS = {
+  'user': 1,
+  'contributor': 2,
+  'moderator': 3,
+  'editor': 4,
+  'admin': 5,
+  'core_admin': 6
+};
 
 export function ProtectedRoute({ 
   children, 
   fallback, 
-  requireAdmin = false 
+  requireAdmin = false,
+  requireRole
 }: ProtectedRouteProps) {
   const { user, isAuthenticated, loading } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -67,8 +79,35 @@ export function ProtectedRoute({
     );
   }
 
-  // Check admin access if required
-  if (requireAdmin && user?.user_metadata?.role !== 'admin') {
+  // Get user role from user metadata or default to 'user'
+  const userRole = user?.user_metadata?.role || user?.role || 'user';
+  const userLevel = ROLE_LEVELS[userRole as keyof typeof ROLE_LEVELS] || 1;
+
+  // Check role-based access
+  if (requireRole) {
+    const requiredLevel = ROLE_LEVELS[requireRole];
+    if (userLevel < requiredLevel) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px] p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Lock className="h-12 w-12 text-red-500" />
+              </div>
+              <CardTitle>Access Denied</CardTitle>
+              <CardDescription>
+                You need {requireRole} access or higher to view this page. 
+                Your current role: {userRole}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      );
+    }
+  }
+
+  // Legacy admin check (for backward compatibility)
+  if (requireAdmin && !['admin', 'core_admin'].includes(userRole)) {
     return (
       <div className="flex items-center justify-center min-h-[400px] p-4">
         <Card className="w-full max-w-md">

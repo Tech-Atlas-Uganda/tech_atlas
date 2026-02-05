@@ -7,8 +7,8 @@
  * It checks the database connection and creates tables if needed.
  */
 
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -19,7 +19,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
   console.error("❌ DATABASE_URL environment variable is required");
   console.log("\nPlease set DATABASE_URL in your .env file:");
-  console.log("DATABASE_URL=mysql://username:password@host:port/database");
+  console.log("DATABASE_URL=postgresql://postgres:password@host:port/database");
   process.exit(1);
 }
 
@@ -29,20 +29,20 @@ async function setupDatabase() {
   try {
     // Test database connection
     console.log("📡 Testing database connection...");
-    const connection = await mysql.createConnection(DATABASE_URL);
-    await connection.ping();
-    console.log("✅ Database connection successful");
+    const client = postgres(DATABASE_URL);
+    const db = drizzle(client);
     
-    // Initialize Drizzle
-    const db = drizzle(connection);
+    // Test connection with a simple query
+    await client`SELECT 1 as test`;
+    console.log("✅ Database connection successful");
     
     // Check if tables exist by trying to count users
     try {
-      const result = await connection.execute("SELECT COUNT(*) as count FROM users LIMIT 1");
+      const result = await client`SELECT COUNT(*) as count FROM users LIMIT 1`;
       console.log("✅ Database tables already exist");
-      console.log(`📊 Current user count: ${result[0][0].count}`);
+      console.log(`📊 Current user count: ${result[0].count}`);
     } catch (error) {
-      if (error.code === 'ER_NO_SUCH_TABLE') {
+      if (error.message.includes('relation "users" does not exist')) {
         console.log("⚠️  Database tables not found");
         console.log("\n📋 To create tables, run:");
         console.log("   pnpm db:push");
@@ -52,7 +52,7 @@ async function setupDatabase() {
       }
     }
     
-    await connection.end();
+    await client.end();
     
     console.log("\n🎉 Database setup check completed!");
     console.log("\n📚 Next steps:");
@@ -63,22 +63,24 @@ async function setupDatabase() {
   } catch (error) {
     console.error("❌ Database setup failed:");
     
-    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error("   Access denied - check your username and password");
-    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      console.error("   Cannot connect to database server - check host and port");
-    } else if (error.code === 'ER_BAD_DB_ERROR') {
+    if (error.code === 'ENOTFOUND') {
+      console.error("   Cannot resolve hostname - check your connection string");
+    } else if (error.code === 'ECONNREFUSED') {
+      console.error("   Connection refused - check host and port");
+    } else if (error.message.includes('password authentication failed')) {
+      console.error("   Authentication failed - check your password");
+    } else if (error.message.includes('database') && error.message.includes('does not exist')) {
       console.error("   Database does not exist - create it first");
     } else {
       console.error("  ", error.message);
     }
     
     console.log("\n🔧 Troubleshooting:");
-    console.log("1. Verify DATABASE_URL format: mysql://user:pass@host:port/dbname");
-    console.log("2. Ensure database server is running");
-    console.log("3. Check firewall and network settings");
-    console.log("4. Verify database and user exist");
-    console.log("\n📖 See LOCAL_SETUP.md for detailed setup instructions");
+    console.log("1. Verify DATABASE_URL format: postgresql://user:pass@host:port/dbname");
+    console.log("2. Ensure Supabase project is active and not paused");
+    console.log("3. Check your Supabase password is correct");
+    console.log("4. Verify network connectivity");
+    console.log("\n📖 See SUPABASE_SETUP.md for detailed setup instructions");
     
     process.exit(1);
   }

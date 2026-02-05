@@ -77,7 +77,7 @@ export default function Ecosystem() {
       );
     }
     
-    if (location && location.trim() !== "") {
+    if (location && location.trim() !== "" && location !== "all") {
       filtered = filtered.filter(item =>
         item.location?.toLowerCase().includes(location.toLowerCase())
       );
@@ -386,11 +386,12 @@ export default function Ecosystem() {
             </div>
             <div className="flex gap-2">
               <div className="flex items-center gap-2">
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <Select value={selectedLocation || undefined} onValueChange={setSelectedLocation}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="All Districts" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Districts</SelectItem>
                     {ALL_DISTRICTS.map(district => (
                       <SelectItem key={district} value={district}>{district}</SelectItem>
                     ))}

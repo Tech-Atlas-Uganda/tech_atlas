@@ -17,6 +17,9 @@ import Events from "./pages/Events";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Admin from "./pages/Admin";
+import CoreAdmin from "./pages/CoreAdmin";
+import Moderator from "./pages/Moderator";
+import Editor from "./pages/Editor";
 import SubmitHub from "./pages/SubmitHub";
 import SubmitJob from "./pages/SubmitJob";
 import SubmitEvent from "./pages/SubmitEvent";
@@ -82,6 +85,18 @@ function Router() {
           </Route>
           <Route path="/admin">
             <Admin />
+            <Footer />
+          </Route>
+          <Route path="/core-admin">
+            <CoreAdmin />
+            <Footer />
+          </Route>
+          <Route path="/moderator">
+            <Moderator />
+            <Footer />
+          </Route>
+          <Route path="/editor">
+            <Editor />
             <Footer />
           </Route>
           <Route path="/submit/hub">
