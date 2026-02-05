@@ -28,9 +28,16 @@ export default function SubmitResource() {
     tags: "",
   });
 
+  const utils = trpc.useUtils();
+
   const createResource = trpc.learning.create.useMutation({
     onSuccess: () => {
-      toast.success("Learning resource submitted successfully! It will be reviewed by our team.");
+      toast.success("Learning resource submitted successfully!", {
+        description: "Your resource is now live and visible to learners.",
+        duration: 5000,
+      });
+      // Invalidate and refetch learning resources data
+      utils.learning.list.invalidate();
       setLocation("/learning");
     },
     onError: (error) => {
@@ -235,10 +242,10 @@ export default function SubmitResource() {
                 </Button>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
-                <p className="text-blue-700 dark:text-blue-300">
-                  <strong>Anonymous Submissions Welcome:</strong> You can share learning resources without creating an account. 
-                 Moderation Policy: Platform moderators will remove any submissions that are irrelevant, illegal, or violate our community guidelines. All listings are publicly visible once submitted.
+              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  <strong>Anonymous Submission:</strong> Your learning resource will appear immediately on the platform. 
+                  Moderators will review and remove any inappropriate, duplicate, or irrelevant content.
                 </p>
               </div>
             </form>

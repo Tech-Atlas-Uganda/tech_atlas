@@ -57,10 +57,17 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const client = postgres(process.env.DATABASE_URL);
+      console.log('[Database] Attempting to connect to Supabase...');
+      const client = postgres(process.env.DATABASE_URL, {
+        ssl: 'require',
+        max: 10,
+        idle_timeout: 20,
+        connect_timeout: 10,
+      });
       _db = drizzle(client);
+      console.log('[Database] Successfully connected to Supabase');
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to connect to Supabase:", error);
       _db = null;
     }
   }
@@ -528,8 +535,47 @@ export async function deleteJob(id: number) {
 export async function createGig(data: InsertGig) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(gigs).values(data);
-  return result;
+  
+  console.log('Creating gig with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    requirements: data.requirements || null,
+    category: data.category || null,
+    budget: data.budget || null,
+    currency: data.currency || 'UGX',
+    duration: data.duration || null,
+    skills: data.skills || null,
+    remote: data.remote ?? true,
+    location: data.location || null,
+    contactEmail: data.contactEmail || null,
+    contactPhone: data.contactPhone || null,
+    featured: data.featured ?? false,
+    expiresAt: data.expiresAt || null,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final gig data:', cleanData);
+  
+  try {
+    const result = await db.insert(gigs).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getGigs(filters?: { status?: string; category?: string; limit?: number }) {
@@ -583,8 +629,44 @@ export async function deleteGig(id: number) {
 export async function createLearningResource(data: InsertLearningResource) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(learningResources).values(data);
-  return result;
+  
+  console.log('Creating learning resource with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    type: data.type || null,
+    category: data.category || null,
+    level: data.level || null,
+    url: data.url || null,
+    provider: data.provider || null,
+    cost: data.cost || null,
+    duration: data.duration || null,
+    tags: data.tags || null,
+    featured: data.featured ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final learning resource data:', cleanData);
+  
+  try {
+    const result = await db.insert(learningResources).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getLearningResources(filters?: { status?: string; category?: string; level?: string; limit?: number }) {
@@ -641,8 +723,50 @@ export async function deleteLearningResource(id: number) {
 export async function createEvent(data: InsertEvent) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(events).values(data);
-  return result;
+  
+  console.log('Creating event with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    type: data.type || null,
+    category: data.category || null,
+    startDate: data.startDate || null,
+    endDate: data.endDate || null,
+    location: data.location || null,
+    address: data.address || null,
+    virtual: data.virtual ?? false,
+    meetingUrl: data.meetingUrl || null,
+    registrationUrl: data.registrationUrl || null,
+    organizer: data.organizer || null,
+    organizerEmail: data.organizerEmail || null,
+    capacity: data.capacity || null,
+    tags: data.tags || null,
+    imageUrl: data.imageUrl || null,
+    featured: data.featured ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final event data:', cleanData);
+  
+  try {
+    const result = await db.insert(events).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getEvents(filters?: { status?: string; type?: string; upcoming?: boolean; limit?: number }) {
@@ -699,8 +823,46 @@ export async function deleteEvent(id: number) {
 export async function createOpportunity(data: InsertOpportunity) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(opportunities).values(data);
-  return result;
+  
+  console.log('Creating opportunity with data:', data);
+  
+  // Clean the data to remove undefined values and ensure proper types
+  const cleanData: any = {
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    type: data.type || null,
+    category: data.category || null,
+    provider: data.provider || null,
+    amount: data.amount || null,
+    currency: data.currency || 'USD',
+    eligibility: data.eligibility || null,
+    applicationUrl: data.applicationUrl || null,
+    deadline: data.deadline || null,
+    tags: data.tags || null,
+    imageUrl: data.imageUrl || null,
+    featured: data.featured ?? false,
+    status: data.status || 'pending',
+    createdBy: await resolveCreatedBy(db, data.createdBy),
+    approvedBy: data.approvedBy || null,
+  };
+  
+  // Remove any undefined values
+  Object.keys(cleanData).forEach(key => {
+    if (cleanData[key] === undefined) {
+      delete cleanData[key];
+    }
+  });
+  
+  console.log('Final opportunity data:', cleanData);
+  
+  try {
+    const result = await db.insert(opportunities).values(cleanData);
+    return result;
+  } catch (error) {
+    console.error('Database insert error:', error);
+    throw error;
+  }
 }
 
 export async function getOpportunities(filters?: { status?: string; type?: string; limit?: number }) {

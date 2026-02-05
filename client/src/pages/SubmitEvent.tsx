@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import { CORE_CATEGORIES } from "../../../shared/const";
 export default function SubmitEvent() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const utils = trpc.useUtils();
   const [submissionType, setSubmissionType] = useState<"event" | "opportunity">("event");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -124,9 +126,14 @@ export default function SubmitEvent() {
   };
 
   const createEvent = trpc.events.create.useMutation({
-    onSuccess: () => {
-      toast.success("Event submitted successfully!");
-      setLocation("/events");
+    onSuccess: async () => {
+      toast.success("Event submitted successfully! It's now live on the platform.");
+      // Invalidate queries to refresh the events list
+      await utils.events.list.invalidate();
+      // Small delay to ensure cache is updated
+      setTimeout(() => {
+        setLocation("/events");
+      }, 500);
     },
     onError: (error) => {
       toast.error(`Failed to submit event: ${error.message}`);
@@ -134,9 +141,14 @@ export default function SubmitEvent() {
   });
 
   const createOpportunity = trpc.opportunities.create.useMutation({
-    onSuccess: () => {
-      toast.success("Opportunity submitted successfully!");
-      setLocation("/events");
+    onSuccess: async () => {
+      toast.success("Opportunity submitted successfully! It's now live on the platform.");
+      // Invalidate queries to refresh the opportunities list
+      await utils.opportunities.list.invalidate();
+      // Small delay to ensure cache is updated
+      setTimeout(() => {
+        setLocation("/events");
+      }, 500);
     },
     onError: (error) => {
       toast.error(`Failed to submit opportunity: ${error.message}`);
@@ -151,15 +163,46 @@ export default function SubmitEvent() {
       return;
     }
 
-    // Handle image - either uploaded file or generate default
+    // Upload image to Supabase Storage if provided
     let imageUrl = "";
     if (imageFile) {
-      // In a real implementation, you would upload the file to a storage service
-      // For now, we'll use the preview URL or indicate that an image was uploaded
-      imageUrl = imagePreview || "";
-      toast.info("Image upload functionality will be implemented with storage service");
+      try {
+        toast.info("Uploading image...");
+        
+        // Generate unique filename
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${submissionType}s/${fileName}`;
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('event-images')
+          .upload(filePath, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Failed to upload image: ${uploadError.message}`);
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+        console.log('Image uploaded successfully:', imageUrl);
+        toast.success("Image uploaded successfully!");
+      } catch (error: any) {
+        console.error('Image upload error:', error);
+        toast.error(`Failed to upload image: ${error.message}`);
+        return;
+      }
     } else {
-      // Generate default image
+      // Generate default image if no image uploaded
       imageUrl = generateDefaultImage(submissionType);
     }
 
@@ -170,7 +213,7 @@ export default function SubmitEvent() {
       category: formData.category || undefined,
       tags: formData.tags ? formData.tags.split(",").map(s => s.trim()) : undefined,
       submitterName: formData.submitterName || undefined,
-      imageUrl: imageUrl || undefined, // Add image URL to submission
+      imageUrl: imageUrl || undefined,
     };
 
     if (submissionType === "event") {
@@ -574,9 +617,13 @@ export default function SubmitEvent() {
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
-                <p className="text-blue-700 dark:text-blue-300">
-                  <strong>Anonymous Submissions Welcome:</strong> You can submit {submissionType === 'event' ? 'events' : 'opportunities'} without creating an account. 
-                  Platform moderators will remove any submissions that are irrelevant, illegal, or violate our community guidelines.
+                <p className="text-blue-700 dark:text-blue-300 mb-2">
+                  <strong>✨ Anonymous Submissions Welcome:</strong> You can submit {submissionType === 'event' ? 'events' : 'opportunities'} without creating an account. 
+                  Your submission will be published immediately and appear live on the platform.
+                </p>
+                <p className="text-blue-600 dark:text-blue-400 text-xs">
+                  <strong>📋 Content Moderation:</strong> Platform moderators and admins will review submissions and may remove content that is irrelevant, 
+                  illegal, spam, or violates our community guidelines. Quality submissions help build a valuable resource for the tech community.
                 </p>
               </div>
             </form>

@@ -22,6 +22,7 @@ import Moderator from "./pages/Moderator";
 import Editor from "./pages/Editor";
 import SubmitHub from "./pages/SubmitHub";
 import SubmitJob from "./pages/SubmitJob";
+import SubmitGig from "./pages/SubmitGig";
 import SubmitEvent from "./pages/SubmitEvent";
 import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
@@ -105,6 +106,10 @@ function Router() {
           </Route>
           <Route path="/submit/job">
             <SubmitJob />
+            <Footer />
+          </Route>
+          <Route path="/submit/gig">
+            <SubmitGig />
             <Footer />
           </Route>
           <Route path="/submit/event">

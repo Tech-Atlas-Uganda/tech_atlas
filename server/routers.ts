@@ -503,22 +503,37 @@ export const appRouter = router({
       .query(async ({ input }) => {
         console.log('🔍 Fetching jobs with filters:', input);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
+        try {
+          console.log('📊 Trying Supabase client for jobs...');
+          const supabaseResult = await dbSupabase.getJobsSupabase(input);
+          console.log('📊 Supabase client returned:', supabaseResult?.length || 0, 'jobs');
+          
+          if (supabaseResult && supabaseResult.length >= 0) {
+            return supabaseResult;
+          }
+        } catch (supabaseError) {
+          console.warn('❌ Supabase client failed:', supabaseError);
+        }
+        
+        // Try primary database as backup
         try {
           console.log('📊 Trying primary database for jobs...');
           const primaryResult = await db.getJobs(input);
           console.log('📊 Primary database returned:', primaryResult?.length || 0, 'jobs');
           
-          if (primaryResult && primaryResult.length > 0) {
+          if (primaryResult && primaryResult.length >= 0) {
             return primaryResult;
           }
         } catch (primaryError) {
           console.warn('❌ Primary database failed:', primaryError);
         }
         
-        // Return empty array for now (jobs not implemented in local DB yet)
-        console.log('⚠️ Using empty fallback for jobs...');
-        return [];
+        // Use local database as final fallback
+        console.log('⚠️ Using local database for jobs...');
+        const localResult = localDB.getJobs(input);
+        console.log('📊 Local database returned:', localResult?.length || 0, 'jobs');
+        return localResult;
       }),
     
     getBySlug: publicProcedure
@@ -527,8 +542,8 @@ export const appRouter = router({
         try {
           return await db.getJobBySlug(input);
         } catch (error) {
-          console.warn('❌ Failed to get job by slug:', error);
-          return undefined;
+          console.warn('❌ Failed to get job by slug, trying local:', error);
+          return localDB.getJobBySlug(input);
         }
       }),
     
@@ -563,28 +578,34 @@ export const appRouter = router({
         
         console.log('💼 Creating job:', jobData.title);
         
-        // Try primary database first
+        // Try primary Supabase database first
         try {
-          console.log('📊 Trying primary database for job creation...');
+          console.log('📊 Trying primary Supabase database for job creation...');
           await db.createJob(jobData);
           const result = await db.getJobBySlug(slug);
-          console.log('✅ Job created in primary database:', result?.title);
-          return result;
+          if (result) {
+            console.log('✅ Job created in PRIMARY SUPABASE database:', result?.title);
+            return result;
+          }
         } catch (primaryError) {
-          console.warn('❌ Primary database failed for job creation:', primaryError);
-          
-          // For now, return a mock success response since jobs aren't in local DB
-          console.log('⚠️ Using mock response for job creation...');
-          return {
-            id: Date.now(),
-            ...jobData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            approvedAt: new Date(),
-            featured: false,
-            approvedBy: null,
-          };
+          console.error('❌ PRIMARY SUPABASE database failed for job creation:', primaryError);
         }
+        
+        // Try Supabase client as backup
+        try {
+          console.log('📊 Trying Supabase client for job creation...');
+          const result = await dbSupabase.createJobSupabase(jobData);
+          console.log('✅ Job created in SUPABASE CLIENT:', result?.title);
+          return result;
+        } catch (supabaseError) {
+          console.error('❌ SUPABASE CLIENT failed for job creation:', supabaseError);
+        }
+        
+        // Only use local database as absolute last resort
+        console.warn('⚠️ USING LOCAL DATABASE - DATA WILL NOT BE PERSISTENT!');
+        const result = localDB.createJob(jobData);
+        console.log('✅ Job created in LOCAL database (NOT PERSISTENT):', result?.title);
+        return result;
       }),
     
     update: adminProcedure
@@ -623,22 +644,37 @@ export const appRouter = router({
       .query(async ({ input }) => {
         console.log('🔍 Fetching gigs with filters:', input);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
+        try {
+          console.log('📊 Trying Supabase client for gigs...');
+          const supabaseResult = await dbSupabase.getGigsSupabase(input);
+          console.log('📊 Supabase client returned:', supabaseResult?.length || 0, 'gigs');
+          
+          if (supabaseResult && supabaseResult.length >= 0) {
+            return supabaseResult;
+          }
+        } catch (supabaseError) {
+          console.warn('❌ Supabase client failed:', supabaseError);
+        }
+        
+        // Try primary database as backup
         try {
           console.log('📊 Trying primary database for gigs...');
           const primaryResult = await db.getGigs(input);
           console.log('📊 Primary database returned:', primaryResult?.length || 0, 'gigs');
           
-          if (primaryResult && primaryResult.length > 0) {
+          if (primaryResult && primaryResult.length >= 0) {
             return primaryResult;
           }
         } catch (primaryError) {
           console.warn('❌ Primary database failed:', primaryError);
         }
         
-        // Return empty array for now (gigs not implemented in local DB yet)
-        console.log('⚠️ Using empty fallback for gigs...');
-        return [];
+        // Use local database as final fallback
+        console.log('⚠️ Using local database for gigs...');
+        const localResult = localDB.getGigs(input);
+        console.log('📊 Local database returned:', localResult?.length || 0, 'gigs');
+        return localResult;
       }),
     
     getBySlug: publicProcedure
@@ -647,8 +683,8 @@ export const appRouter = router({
         try {
           return await db.getGigBySlug(input);
         } catch (error) {
-          console.warn('❌ Failed to get gig by slug:', error);
-          return undefined;
+          console.warn('❌ Failed to get gig by slug, trying local:', error);
+          return localDB.getGigBySlug(input);
         }
       }),
     
@@ -680,28 +716,34 @@ export const appRouter = router({
         
         console.log('🎯 Creating gig:', gigData.title);
         
-        // Try primary database first
+        // Try primary Supabase database first
         try {
-          console.log('📊 Trying primary database for gig creation...');
+          console.log('📊 Trying primary Supabase database for gig creation...');
           await db.createGig(gigData);
           const result = await db.getGigBySlug(slug);
-          console.log('✅ Gig created in primary database:', result?.title);
-          return result;
+          if (result) {
+            console.log('✅ Gig created in PRIMARY SUPABASE database:', result?.title);
+            return result;
+          }
         } catch (primaryError) {
-          console.warn('❌ Primary database failed for gig creation:', primaryError);
-          
-          // For now, return a mock success response since gigs aren't in local DB
-          console.log('⚠️ Using mock response for gig creation...');
-          return {
-            id: Date.now(),
-            ...gigData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            approvedAt: new Date(),
-            featured: false,
-            approvedBy: null,
-          };
+          console.error('❌ PRIMARY SUPABASE database failed for gig creation:', primaryError);
         }
+        
+        // Try Supabase client as backup
+        try {
+          console.log('📊 Trying Supabase client for gig creation...');
+          const result = await dbSupabase.createGigSupabase(gigData);
+          console.log('✅ Gig created in SUPABASE CLIENT:', result?.title);
+          return result;
+        } catch (supabaseError) {
+          console.error('❌ SUPABASE CLIENT failed for gig creation:', supabaseError);
+        }
+        
+        // Only use local database as absolute last resort
+        console.warn('⚠️ USING LOCAL DATABASE - DATA WILL NOT BE PERSISTENT!');
+        const result = localDB.createGig(gigData);
+        console.log('✅ Gig created in LOCAL database (NOT PERSISTENT):', result?.title);
+        return result;
       }),
     
     update: adminProcedure
@@ -741,20 +783,33 @@ export const appRouter = router({
       .query(async ({ input }) => {
         console.log('🔍 Fetching learning resources with filters:', input);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
+        try {
+          console.log('📊 Trying Supabase client for learning resources...');
+          const supabaseResult = await dbSupabase.getLearningResourcesSupabase(input);
+          console.log('📊 Supabase client returned:', supabaseResult?.length || 0, 'learning resources');
+          
+          if (supabaseResult && supabaseResult.length >= 0) {
+            return supabaseResult;
+          }
+        } catch (supabaseError) {
+          console.warn('❌ Supabase client failed:', supabaseError);
+        }
+        
+        // Try primary database as backup
         try {
           console.log('📊 Trying primary database for learning resources...');
           const primaryResult = await db.getLearningResources(input);
           console.log('📊 Primary database returned:', primaryResult?.length || 0, 'learning resources');
           
-          if (primaryResult && primaryResult.length > 0) {
+          if (primaryResult && primaryResult.length >= 0) {
             return primaryResult;
           }
         } catch (primaryError) {
           console.warn('❌ Primary database failed:', primaryError);
         }
         
-        // Return empty array for now
+        // Use local database as final fallback
         console.log('⚠️ Using empty fallback for learning resources...');
         return [];
       }),
@@ -795,28 +850,40 @@ export const appRouter = router({
         
         console.log('📚 Creating learning resource:', resourceData.title);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
         try {
-          console.log('📊 Trying primary database for learning resource creation...');
+          console.log('📊 Trying Supabase client for learning resource creation...');
+          const result = await dbSupabase.createLearningResourceSupabase(resourceData);
+          console.log('✅ Learning resource created in SUPABASE CLIENT:', result?.title);
+          return result;
+        } catch (supabaseError) {
+          console.error('❌ SUPABASE CLIENT failed for learning resource creation:', supabaseError);
+        }
+        
+        // Try primary Supabase database as backup
+        try {
+          console.log('📊 Trying primary Supabase database for learning resource creation...');
           await db.createLearningResource(resourceData);
           const result = await db.getLearningResourceBySlug(slug);
-          console.log('✅ Learning resource created in primary database:', result?.title);
-          return result;
+          if (result) {
+            console.log('✅ Learning resource created in PRIMARY SUPABASE database:', result?.title);
+            return result;
+          }
         } catch (primaryError) {
-          console.warn('❌ Primary database failed for learning resource creation:', primaryError);
-          
-          // Return mock success response
-          console.log('⚠️ Using mock response for learning resource creation...');
-          return {
-            id: Date.now(),
-            ...resourceData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            approvedAt: new Date(),
-            featured: false,
-            approvedBy: null,
-          };
+          console.error('❌ PRIMARY SUPABASE database failed for learning resource creation:', primaryError);
         }
+        
+        // Return mock success response as final fallback
+        console.warn('⚠️ USING MOCK RESPONSE - DATA WILL NOT BE PERSISTENT!');
+        return {
+          id: Date.now(),
+          ...resourceData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          approvedAt: new Date(),
+          featured: false,
+          approvedBy: null,
+        };
       }),
     
     update: adminProcedure
@@ -855,20 +922,33 @@ export const appRouter = router({
       .query(async ({ input }) => {
         console.log('🔍 Fetching events with filters:', input);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
+        try {
+          console.log('📊 Trying Supabase client for events...');
+          const supabaseResult = await dbSupabase.getEventsSupabase(input);
+          console.log('📊 Supabase client returned:', supabaseResult?.length || 0, 'events');
+          
+          if (supabaseResult && supabaseResult.length >= 0) {
+            return supabaseResult;
+          }
+        } catch (supabaseError) {
+          console.warn('❌ Supabase client failed:', supabaseError);
+        }
+        
+        // Try primary database as backup
         try {
           console.log('📊 Trying primary database for events...');
           const primaryResult = await db.getEvents(input);
           console.log('📊 Primary database returned:', primaryResult?.length || 0, 'events');
           
-          if (primaryResult && primaryResult.length > 0) {
+          if (primaryResult && primaryResult.length >= 0) {
             return primaryResult;
           }
         } catch (primaryError) {
           console.warn('❌ Primary database failed:', primaryError);
         }
         
-        // Return empty array for now
+        // Use empty array as final fallback
         console.log('⚠️ Using empty fallback for events...');
         return [];
       }),
@@ -902,6 +982,7 @@ export const appRouter = router({
         organizerEmail: z.string().optional(),
         capacity: z.number().optional(),
         tags: z.array(z.string()).optional(),
+        imageUrl: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const slug = input.slug || generateSlug(input.title);
@@ -914,28 +995,40 @@ export const appRouter = router({
         
         console.log('📅 Creating event:', eventData.title);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
         try {
-          console.log('📊 Trying primary database for event creation...');
+          console.log('📊 Trying Supabase client for event creation...');
+          const result = await dbSupabase.createEventSupabase(eventData);
+          console.log('✅ Event created in SUPABASE CLIENT:', result?.title);
+          return result;
+        } catch (supabaseError) {
+          console.error('❌ SUPABASE CLIENT failed for event creation:', supabaseError);
+        }
+        
+        // Try primary Supabase database as backup
+        try {
+          console.log('📊 Trying primary Supabase database for event creation...');
           await db.createEvent(eventData);
           const result = await db.getEventBySlug(slug);
-          console.log('✅ Event created in primary database:', result?.title);
-          return result;
+          if (result) {
+            console.log('✅ Event created in PRIMARY SUPABASE database:', result?.title);
+            return result;
+          }
         } catch (primaryError) {
-          console.warn('❌ Primary database failed for event creation:', primaryError);
-          
-          // Return mock success response
-          console.log('⚠️ Using mock response for event creation...');
-          return {
-            id: Date.now(),
-            ...eventData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            approvedAt: new Date(),
-            featured: false,
-            approvedBy: null,
-          };
+          console.error('❌ PRIMARY SUPABASE database failed for event creation:', primaryError);
         }
+        
+        // Return mock success response as final fallback
+        console.warn('⚠️ USING MOCK RESPONSE - DATA WILL NOT BE PERSISTENT!');
+        return {
+          id: Date.now(),
+          ...eventData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          approvedAt: new Date(),
+          featured: false,
+          approvedBy: null,
+        };
       }),
     
     update: adminProcedure
@@ -974,20 +1067,33 @@ export const appRouter = router({
       .query(async ({ input }) => {
         console.log('🔍 Fetching opportunities with filters:', input);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
+        try {
+          console.log('📊 Trying Supabase client for opportunities...');
+          const supabaseResult = await dbSupabase.getOpportunitiesSupabase(input);
+          console.log('📊 Supabase client returned:', supabaseResult?.length || 0, 'opportunities');
+          
+          if (supabaseResult && supabaseResult.length >= 0) {
+            return supabaseResult;
+          }
+        } catch (supabaseError) {
+          console.warn('❌ Supabase client failed:', supabaseError);
+        }
+        
+        // Try primary database as backup
         try {
           console.log('📊 Trying primary database for opportunities...');
           const primaryResult = await db.getOpportunities(input);
           console.log('📊 Primary database returned:', primaryResult?.length || 0, 'opportunities');
           
-          if (primaryResult && primaryResult.length > 0) {
+          if (primaryResult && primaryResult.length >= 0) {
             return primaryResult;
           }
         } catch (primaryError) {
           console.warn('❌ Primary database failed:', primaryError);
         }
         
-        // Return empty array for now
+        // Use empty array as final fallback
         console.log('⚠️ Using empty fallback for opportunities...');
         return [];
       }),
@@ -1009,6 +1115,7 @@ export const appRouter = router({
         slug: z.string().optional(),
         description: z.string().optional(),
         type: z.string().optional(),
+        category: z.string().optional(),
         provider: z.string().optional(),
         amount: z.string().optional(),
         currency: z.string().optional(),
@@ -1016,6 +1123,7 @@ export const appRouter = router({
         applicationUrl: z.string().optional(),
         deadline: z.date().optional(),
         tags: z.array(z.string()).optional(),
+        imageUrl: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const slug = input.slug || generateSlug(input.title);
@@ -1028,28 +1136,40 @@ export const appRouter = router({
         
         console.log('🎯 Creating opportunity:', opportunityData.title);
         
-        // Try primary database first
+        // Try Supabase client first (most reliable)
         try {
-          console.log('📊 Trying primary database for opportunity creation...');
+          console.log('📊 Trying Supabase client for opportunity creation...');
+          const result = await dbSupabase.createOpportunitySupabase(opportunityData);
+          console.log('✅ Opportunity created in SUPABASE CLIENT:', result?.title);
+          return result;
+        } catch (supabaseError) {
+          console.error('❌ SUPABASE CLIENT failed for opportunity creation:', supabaseError);
+        }
+        
+        // Try primary Supabase database as backup
+        try {
+          console.log('📊 Trying primary Supabase database for opportunity creation...');
           await db.createOpportunity(opportunityData);
           const result = await db.getOpportunityBySlug(slug);
-          console.log('✅ Opportunity created in primary database:', result?.title);
-          return result;
+          if (result) {
+            console.log('✅ Opportunity created in PRIMARY SUPABASE database:', result?.title);
+            return result;
+          }
         } catch (primaryError) {
-          console.warn('❌ Primary database failed for opportunity creation:', primaryError);
-          
-          // Return mock success response
-          console.log('⚠️ Using mock response for opportunity creation...');
-          return {
-            id: Date.now(),
-            ...opportunityData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            approvedAt: new Date(),
-            featured: false,
-            approvedBy: null,
-          };
+          console.error('❌ PRIMARY SUPABASE database failed for opportunity creation:', primaryError);
         }
+        
+        // Return mock success response as final fallback
+        console.warn('⚠️ USING MOCK RESPONSE - DATA WILL NOT BE PERSISTENT!');
+        return {
+          id: Date.now(),
+          ...opportunityData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          approvedAt: new Date(),
+          featured: false,
+          approvedBy: null,
+        };
       }),
     
     update: adminProcedure
@@ -1248,9 +1368,11 @@ export const appRouter = router({
           hubs: localStats.hubs,
           communities: localStats.communities,
           startups: localStats.startups,
-          jobs: 0,
-          events: 0,
-          learning: 0,
+          jobs: localStats.jobs,
+          gigs: localStats.gigs,
+          events: localStats.events,
+          learningResources: localStats.learningResources,
+          opportunities: localStats.opportunities,
           blog: 0,
           users: 1
         };

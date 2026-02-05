@@ -6,16 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { Briefcase, DollarSign, MapPin, Clock, Search, Plus, Building, Calendar } from "lucide-react";
-import { motion } from "framer-motion";
+import { Briefcase, DollarSign, MapPin, Clock, Search, Plus, Building, Calendar, ExternalLink, Mail, Globe, Users, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Jobs() {
-  const [searchQuery, setSearchQuery] = useState("");                                                                                                                                                                                                                                                                                                                  
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
 
   const { data: jobs, isLoading: jobsLoading } = trpc.jobs.list.useQuery({ status: "approved" });
   const { data: gigs, isLoading: gigsLoading } = trpc.gigs.list.useQuery({ status: "approved" });
@@ -51,53 +52,17 @@ export default function Jobs() {
       );
     }
 
-    // Filter by location
-    if (locationFilter === "remote") {
-      filtered = filtered.filter(item => item.remote === true);
-    } else if (locationFilter !== "all") {
-      filtered = filtered.filter(item => 
-        item.location?.toLowerCase().includes(locationFilter.toLowerCase())
-      );
-    }
-
-    // Filter by status (active/expired)
-    if (statusFilter === "active") {
-      filtered = filtered.filter(item => {
-        if (!item.expiresAt) return true; // No expiry date means active
-        return new Date(item.expiresAt) > new Date();
-      });
-    } else if (statusFilter === "expired") {
-      filtered = filtered.filter(item => {
-        if (!item.expiresAt) return false;
-        return new Date(item.expiresAt) <= new Date();
-      });
-    }
-
     return filtered;
   };
 
   const filteredOpportunities = filterOpportunities(allOpportunities);
-  const filteredJobs = filteredOpportunities.filter(item => item.opportunityType === "job");
-  const filteredGigs = filteredOpportunities.filter(item => item.opportunityType === "gig");
+  const filteredJobs = filterOpportunities(jobs || []).map(job => ({ ...job, opportunityType: "job" }));
+  const filteredGigs = filterOpportunities(gigs || []).map(gig => ({ ...gig, opportunityType: "gig" }));
 
-  // Get unique locations for filter
-  const uniqueLocations = Array.from(new Set(
-    allOpportunities
-      .map(item => item.location)
-      .filter((loc): loc is string => Boolean(loc))
-      .map(loc => loc.toLowerCase())
-  )).sort();
-
-  // Get unique types for filter
-  const uniqueTypes = Array.from(new Set([
-    ...allOpportunities.map(item => (item as any).type).filter(Boolean),
-    ...allOpportunities.map(item => (item as any).category).filter(Boolean)
-  ])).sort();
-
-  const formatSalary = (min?: number, max?: number, currency?: string) => {
-    const curr = currency || "UGX";
-    if (min && max) return `${curr} ${min.toLocaleString()} - ${max.toLocaleString()}`;
-    if (min) return `${curr} ${min.toLocaleString()}+`;
+  const formatSalary = (min?: number, max?: number, curr?: string) => {
+    const currency = curr || "UGX";
+    if (max && min) return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`;
+    if (min) return `${currency} ${min.toLocaleString()}+`;
     return "Competitive";
   };
 
@@ -120,17 +85,262 @@ export default function Jobs() {
     return date.toLocaleDateString();
   };
 
+  const CompactOpportunityCard = ({ opportunity, index }: { opportunity: any; index: number }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.02 }}
+      whileHover={{ y: -2 }}
+      className="cursor-pointer"
+      onClick={() => setSelectedOpportunity(opportunity)}
+    >
+      <Card className={`h-full hover:shadow-md transition-all duration-200 hover:border-primary/30 ${isExpired(opportunity.expiresAt) ? 'opacity-60' : ''} border-l-4 ${opportunity.opportunityType === 'job' ? 'border-l-blue-500' : 'border-l-green-500'}`}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-base leading-tight truncate">{opportunity.title}</h3>
+                {isExpired(opportunity.expiresAt) && (
+                  <Badge variant="destructive" className="text-xs px-1.5 py-0.5">Expired</Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center text-sm text-muted-foreground mb-2">
+                {opportunity.opportunityType === 'job' ? (
+                  <>
+                    <Building className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="truncate">{opportunity.company}</span>
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Freelance Project</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <Badge 
+                  variant="outline" 
+                  className={`text-xs px-2 py-0.5 ${opportunity.opportunityType === 'job' ? 'border-blue-200 text-blue-700 bg-blue-50' : 'border-green-200 text-green-700 bg-green-50'}`}
+                >
+                  {opportunity.opportunityType === 'job' ? 'Job' : 'Gig'}
+                </Badge>
+                
+                {(opportunity.type || opportunity.category) && (
+                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                    {opportunity.type || opportunity.category}
+                  </Badge>
+                )}
+                
+                {opportunity.remote ? (
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Remote
+                  </Badge>
+                ) : opportunity.location && (
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {opportunity.location}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="text-right flex-shrink-0">
+              <div className="text-sm font-semibold text-primary">
+                {opportunity.opportunityType === 'job' 
+                  ? formatSalary(opportunity.salaryMin, opportunity.salaryMax, opportunity.currency)
+                  : opportunity.budget 
+                    ? `${opportunity.currency || "UGX"} ${opportunity.budget.toLocaleString()}`
+                    : "Budget TBD"
+                }
+              </div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <Clock className="h-3 w-3" />
+                {new Date(opportunity.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        
+        {opportunity.description && (
+          <CardContent className="pt-0">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {opportunity.description}
+            </p>
+          </CardContent>
+        )}
+      </Card>
+    </motion.div>
+  );
+
+  const OpportunityDetailModal = ({ opportunity, onClose }: { opportunity: any; onClose: () => void }) => (
+    <Dialog open={!!opportunity} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl mb-2">{opportunity.title}</DialogTitle>
+              <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                {opportunity.opportunityType === 'job' ? (
+                  <>
+                    <Building className="h-4 w-4" />
+                    <span className="font-medium">{opportunity.company}</span>
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-medium">Freelance Project</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xl font-bold text-primary mb-1">
+                {opportunity.opportunityType === 'job' 
+                  ? formatSalary(opportunity.salaryMin, opportunity.salaryMax, opportunity.currency)
+                  : opportunity.budget 
+                    ? `${opportunity.currency || "UGX"} ${opportunity.budget.toLocaleString()}`
+                    : "Budget TBD"
+                }
+              </div>
+              <Badge 
+                variant="outline" 
+                className={opportunity.opportunityType === 'job' ? 'border-blue-500 text-blue-600' : 'border-green-500 text-green-600'}
+              >
+                {opportunity.opportunityType === 'job' ? 'Job Opening' : 'Gig Project'}
+              </Badge>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Key Details */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  {opportunity.remote ? 'Remote' : opportunity.location || 'Location not specified'}
+                </span>
+              </div>
+              
+              {(opportunity.type || opportunity.category) && (
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{opportunity.type || opportunity.category}</span>
+                </div>
+              )}
+              
+              {opportunity.experienceLevel && (
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{opportunity.experienceLevel}</span>
+                </div>
+              )}
+              
+              {opportunity.duration && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{opportunity.duration}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Posted {new Date(opportunity.createdAt).toLocaleDateString()}</span>
+              </div>
+              
+              {opportunity.expiresAt && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className={`text-sm ${isExpired(opportunity.expiresAt) ? 'text-red-500' : 'text-orange-500'}`}>
+                    {formatExpiryDate(opportunity.expiresAt)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          {opportunity.description && (
+            <div>
+              <h4 className="font-semibold mb-2">Description</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {opportunity.description}
+              </p>
+            </div>
+          )}
+
+          {/* Requirements */}
+          {opportunity.requirements && (
+            <div>
+              <h4 className="font-semibold mb-2">Requirements</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {opportunity.requirements}
+              </p>
+            </div>
+          )}
+
+          {/* Responsibilities (Jobs only) */}
+          {opportunity.responsibilities && (
+            <div>
+              <h4 className="font-semibold mb-2">Responsibilities</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {opportunity.responsibilities}
+              </p>
+            </div>
+          )}
+
+          {/* Contact/Application */}
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-3">How to Apply</h4>
+            <div className="flex flex-wrap gap-3">
+              {opportunity.applicationUrl && (
+                <Button asChild>
+                  <a href={opportunity.applicationUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Apply Online
+                  </a>
+                </Button>
+              )}
+              
+              {opportunity.applicationEmail && (
+                <Button variant="outline" asChild>
+                  <a href={`mailto:${opportunity.applicationEmail}`}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email Application
+                  </a>
+                </Button>
+              )}
+              
+              {opportunity.contactEmail && !opportunity.applicationEmail && (
+                <Button variant="outline" asChild>
+                  <a href={`mailto:${opportunity.contactEmail}`}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      
-      
-      <div className="container py-12">
+      <div className="container py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="space-y-6 mb-12"
+          className="space-y-6 mb-8"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -146,7 +356,15 @@ export default function Jobs() {
                 <Link href="/submit/job">
                   <a className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    Post Opportunity
+                    Post Job
+                  </a>
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/submit/gig">
+                  <a className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Post Gig
                   </a>
                 </Link>
               </Button>
@@ -154,8 +372,8 @@ export default function Jobs() {
           </div>
 
           {/* Filters */}
-          <div className="grid md:grid-cols-5 gap-4">
-            <div className="md:col-span-2 relative">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search opportunities..."
@@ -164,42 +382,16 @@ export default function Jobs() {
                 className="pl-10"
               />
             </div>
-            
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {uniqueTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="remote">Remote</SelectItem>
-                {uniqueLocations.map(location => (
-                  <SelectItem key={location} value={location}>
-                    {location.charAt(0).toUpperCase() + location.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="full-time">Full-time</SelectItem>
+                <SelectItem value="part-time">Part-time</SelectItem>
+                <SelectItem value="contract">Contract</SelectItem>
+                <SelectItem value="internship">Internship</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -207,7 +399,7 @@ export default function Jobs() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mb-6">
             <TabsTrigger value="all" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               All ({filteredOpportunities.length})
@@ -223,314 +415,90 @@ export default function Jobs() {
           </TabsList>
 
           {/* All Opportunities Tab */}
-          <TabsContent value="all" className="mt-8">
+          <TabsContent value="all">
             {(jobsLoading || gigsLoading) ? (
-              <div className="text-center py-12">Loading opportunities...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Loading opportunities...</p>
+              </div>
             ) : filteredOpportunities.length === 0 ? (
               <div className="text-center py-12">
                 <Plus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No opportunities found matching your criteria.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredOpportunities.map((opportunity, index) => (
-                  <motion.div
+                  <CompactOpportunityCard 
                     key={`${opportunity.opportunityType}-${opportunity.id}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                  >
-                    <Link href={`/${opportunity.opportunityType === 'job' ? 'jobs' : 'gigs'}/${opportunity.slug}`}>
-                      <a>
-                        <Card className={`hover:shadow-lg transition-all hover:border-primary/50 ${isExpired(opportunity.expiresAt) ? 'opacity-60' : ''}`}>
-                          <CardHeader>
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-start gap-3 mb-2">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <CardTitle className="text-xl">{opportunity.title}</CardTitle>
-                                      {isExpired(opportunity.expiresAt) && (
-                                        <Badge variant="destructive" className="text-xs">Expired</Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center text-muted-foreground">
-                                      {opportunity.opportunityType === 'job' ? (
-                                        <>
-                                          <Building className="h-4 w-4 mr-1" />
-                                          <span className="font-medium">{opportunity.company}</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <DollarSign className="h-4 w-4 mr-1" />
-                                          <span className="font-medium">Gig Project</span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Badge 
-                                    variant="outline" 
-                                    className={opportunity.opportunityType === 'job' ? 'border-blue-500 text-blue-600' : 'border-green-500 text-green-600'}
-                                  >
-                                    {opportunity.opportunityType === 'job' ? 'Job' : 'Gig'}
-                                  </Badge>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  {opportunity.type && <Badge variant="secondary">{opportunity.type}</Badge>}
-                                  {opportunity.category && <Badge variant="secondary">{opportunity.category}</Badge>}
-                                  {opportunity.remote ? (
-                                    <Badge variant="outline" className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      Remote
-                                    </Badge>
-                                  ) : opportunity.location && (
-                                    <Badge variant="outline" className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {opportunity.location}
-                                    </Badge>
-                                  )}
-                                  {opportunity.duration && (
-                                    <Badge variant="outline">{opportunity.duration}</Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-semibold text-primary">
-                                  {opportunity.opportunityType === 'job' 
-                                    ? formatSalary(opportunity.salaryMin, opportunity.salaryMax, opportunity.currency)
-                                    : opportunity.budget 
-                                      ? `${opportunity.currency || "UGX"} ${opportunity.budget.toLocaleString()}`
-                                      : "Budget TBD"
-                                  }
-                                </div>
-                                <div className="text-sm text-muted-foreground flex items-center justify-end gap-1 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  {new Date(opportunity.createdAt).toLocaleDateString()}
-                                </div>
-                                {opportunity.expiresAt && (
-                                  <div className={`text-xs flex items-center justify-end gap-1 mt-1 ${isExpired(opportunity.expiresAt) ? 'text-red-500' : 'text-orange-500'}`}>
-                                    <Calendar className="h-3 w-3" />
-                                    {formatExpiryDate(opportunity.expiresAt)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          {opportunity.description && (
-                            <CardContent>
-                              <CardDescription className="line-clamp-2">
-                                {opportunity.description}
-                              </CardDescription>
-                            </CardContent>
-                          )}
-                        </Card>
-                      </a>
-                    </Link>
-                  </motion.div>
+                    opportunity={opportunity} 
+                    index={index} 
+                  />
                 ))}
               </div>
             )}
           </TabsContent>
 
           {/* Jobs Tab */}
-          <TabsContent value="job" className="mt-8">
+          <TabsContent value="job">
             {jobsLoading ? (
-              <div className="text-center py-12">Loading jobs...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Loading jobs...</p>
+              </div>
             ) : filteredJobs.length === 0 ? (
               <div className="text-center py-12">
                 <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No jobs found matching your criteria.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredJobs.map((job, index) => (
-                  <motion.div
+                  <CompactOpportunityCard 
                     key={job.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                  >
-                    <Link href={`/jobs/${job.slug}`}>
-                      <a>
-                        <Card className={`hover:shadow-lg transition-all hover:border-primary/50 ${isExpired(job.expiresAt) ? 'opacity-60' : ''}`}>
-                          <CardHeader>
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-start gap-3 mb-2">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <CardTitle className="text-xl">{job.title}</CardTitle>
-                                      {isExpired(job.expiresAt) && (
-                                        <Badge variant="destructive" className="text-xs">Expired</Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center text-muted-foreground">
-                                      <Building className="h-4 w-4 mr-1" />
-                                      <span className="font-medium">{job.company}</span>
-                                    </div>
-                                  </div>
-                                  {job.featured && (
-                                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500">
-                                      Featured
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  <Badge variant="secondary">{job.type}</Badge>
-                                  {job.remote ? (
-                                    <Badge variant="outline" className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      Remote
-                                    </Badge>
-                                  ) : job.location && (
-                                    <Badge variant="outline" className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {job.location}
-                                    </Badge>
-                                  )}
-                                  {job.experienceLevel && (
-                                    <Badge variant="outline">{job.experienceLevel}</Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-semibold text-primary">
-                                  {formatSalary(job.salaryMin, job.salaryMax, job.currency)}
-                                </div>
-                                <div className="text-sm text-muted-foreground flex items-center justify-end gap-1 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  {new Date(job.createdAt).toLocaleDateString()}
-                                </div>
-                                {job.expiresAt && (
-                                  <div className={`text-xs flex items-center justify-end gap-1 mt-1 ${isExpired(job.expiresAt) ? 'text-red-500' : 'text-orange-500'}`}>
-                                    <Calendar className="h-3 w-3" />
-                                    {formatExpiryDate(job.expiresAt)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          {job.description && (
-                            <CardContent>
-                              <CardDescription className="line-clamp-2">
-                                {job.description}
-                              </CardDescription>
-                              {job.skills && job.skills.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  {job.skills.slice(0, 5).map((skill: string) => (
-                                    <Badge key={skill} variant="outline" className="text-xs">
-                                      {skill}
-                                    </Badge>
-                                  ))}
-                                  {job.skills.length > 5 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      +{job.skills.length - 5} more
-                                    </Badge>
-                                  )}
-                                </div>
-                              )}
-                            </CardContent>
-                          )}
-                        </Card>
-                      </a>
-                    </Link>
-                  </motion.div>
+                    opportunity={job} 
+                    index={index} 
+                  />
                 ))}
               </div>
             )}
           </TabsContent>
 
           {/* Gigs Tab */}
-          <TabsContent value="gig" className="mt-8">
+          <TabsContent value="gig">
             {gigsLoading ? (
-              <div className="text-center py-12">Loading gigs...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Loading gigs...</p>
+              </div>
             ) : filteredGigs.length === 0 ? (
               <div className="text-center py-12">
                 <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No gigs found matching your search.</p>
+                <p className="text-muted-foreground">No gigs found matching your criteria.</p>
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredGigs.map((gig, index) => (
-                  <motion.div
+                  <CompactOpportunityCard 
                     key={gig.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                  >
-                    <Link href={`/gigs/${gig.slug}`}>
-                      <a>
-                        <Card className={`h-full hover:shadow-lg transition-all hover:border-primary/50 ${isExpired(gig.expiresAt) ? 'opacity-60' : ''}`}>
-                          <CardHeader>
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <CardTitle className="text-xl">{gig.title}</CardTitle>
-                                  {isExpired(gig.expiresAt) && (
-                                    <Badge variant="destructive" className="text-xs">Expired</Badge>
-                                  )}
-                                </div>
-                              </div>
-                              {gig.featured && (
-                                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 ml-2">
-                                  Featured
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {gig.category && (
-                                <Badge variant="secondary">{gig.category}</Badge>
-                              )}
-                              {gig.remote && (
-                                <Badge variant="outline">Remote</Badge>
-                              )}
-                              {gig.duration && (
-                                <Badge variant="outline">{gig.duration}</Badge>
-                              )}
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <CardDescription className="line-clamp-3 mb-4">
-                              {gig.description || "No description available"}
-                            </CardDescription>
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="text-lg font-semibold text-primary">
-                                {gig.budget ? `${gig.currency || "UGX"} ${gig.budget.toLocaleString()}` : "Budget TBD"}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {new Date(gig.createdAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                            {gig.expiresAt && (
-                              <div className={`text-xs flex items-center gap-1 mb-3 ${isExpired(gig.expiresAt) ? 'text-red-500' : 'text-orange-500'}`}>
-                                <Calendar className="h-3 w-3" />
-                                {formatExpiryDate(gig.expiresAt)}
-                              </div>
-                            )}
-                            {gig.skills && gig.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {gig.skills.slice(0, 4).map((skill: string) => (
-                                  <Badge key={skill} variant="outline" className="text-xs">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                                {gig.skills.length > 4 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{gig.skills.length - 4}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </a>
-                    </Link>
-                  </motion.div>
+                    opportunity={gig} 
+                    index={index} 
+                  />
                 ))}
               </div>
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Detail Modal */}
+        <AnimatePresence>
+          {selectedOpportunity && (
+            <OpportunityDetailModal 
+              opportunity={selectedOpportunity} 
+              onClose={() => setSelectedOpportunity(null)} 
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

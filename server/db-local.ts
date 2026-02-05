@@ -3,7 +3,8 @@
 
 interface LocalEntity {
   id: number;
-  name: string;
+  name?: string;
+  title?: string;
   slug: string;
   description?: string;
   location?: string;
@@ -19,6 +20,11 @@ class LocalDatabase {
   private hubs: LocalEntity[] = [];
   private communities: LocalEntity[] = [];
   private startups: LocalEntity[] = [];
+  private jobs: LocalEntity[] = [];
+  private gigs: LocalEntity[] = [];
+  private events: LocalEntity[] = [];
+  private learningResources: LocalEntity[] = [];
+  private opportunities: LocalEntity[] = [];
   private nextId = 1;
   private initialized = false;
 
@@ -274,8 +280,107 @@ class LocalDatabase {
       hubs: this.hubs.length,
       communities: this.communities.length,
       startups: this.startups.length,
+      jobs: this.jobs.length,
+      gigs: this.gigs.length,
+      events: this.events.length,
+      learningResources: this.learningResources.length,
+      opportunities: this.opportunities.length,
       nextId: this.nextId
     };
+  }
+
+  // Job operations
+  createJob(data: any): LocalEntity {
+    this.initializeSampleData();
+    
+    const job: LocalEntity = {
+      id: this.nextId++,
+      title: data.title,
+      slug: data.slug,
+      company: data.company,
+      description: data.description || null,
+      type: data.type,
+      location: data.location || null,
+      remote: data.remote || false,
+      currency: data.currency || 'UGX',
+      status: data.status || 'approved',
+      createdAt: new Date(),
+      createdBy: data.createdBy || 1,
+      approvedBy: data.approvedBy || null,
+      updatedAt: new Date(),
+      approvedAt: data.status === 'approved' ? new Date() : null
+    };
+    
+    this.jobs.push(job);
+    console.log('✅ Created job locally:', job.title, '- Total jobs:', this.jobs.length);
+    return job;
+  }
+
+  getJobs(filters?: { status?: string }): LocalEntity[] {
+    this.initializeSampleData();
+    
+    let result = [...this.jobs];
+    
+    if (filters?.status) {
+      result = result.filter(j => j.status === filters.status);
+    }
+    
+    console.log(`📋 Returning ${result.length} jobs (filtered by status: ${filters?.status || 'all'})`);
+    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  getJobBySlug(slug: string): LocalEntity | undefined {
+    this.initializeSampleData();
+    const job = this.jobs.find(j => j.slug === slug);
+    console.log(`🔍 Looking for job with slug "${slug}":`, job ? 'Found' : 'Not found');
+    return job;
+  }
+
+  // Gig operations
+  createGig(data: any): LocalEntity {
+    this.initializeSampleData();
+    
+    const gig: LocalEntity = {
+      id: this.nextId++,
+      title: data.title,
+      slug: data.slug,
+      description: data.description || null,
+      category: data.category || null,
+      budget: data.budget || null,
+      currency: data.currency || 'UGX',
+      location: data.location || null,
+      remote: data.remote || false,
+      status: data.status || 'approved',
+      createdAt: new Date(),
+      createdBy: data.createdBy || 1,
+      approvedBy: data.approvedBy || null,
+      updatedAt: new Date(),
+      approvedAt: data.status === 'approved' ? new Date() : null
+    };
+    
+    this.gigs.push(gig);
+    console.log('✅ Created gig locally:', gig.title, '- Total gigs:', this.gigs.length);
+    return gig;
+  }
+
+  getGigs(filters?: { status?: string }): LocalEntity[] {
+    this.initializeSampleData();
+    
+    let result = [...this.gigs];
+    
+    if (filters?.status) {
+      result = result.filter(g => g.status === filters.status);
+    }
+    
+    console.log(`📋 Returning ${result.length} gigs (filtered by status: ${filters?.status || 'all'})`);
+    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  getGigBySlug(slug: string): LocalEntity | undefined {
+    this.initializeSampleData();
+    const gig = this.gigs.find(g => g.slug === slug);
+    console.log(`🔍 Looking for gig with slug "${slug}":`, gig ? 'Found' : 'Not found');
+    return gig;
   }
 }
 
