@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import { ArrowLeft, Send } from "lucide-react";
 import { Link } from "wouter";
 
@@ -32,7 +33,7 @@ export default function NewThread() {
   const createThread = trpc.forum.createThread.useMutation({
     onSuccess: (data) => {
       if (data) {
-        alert("Thread created successfully!");
+        toast.success("Thread created successfully!");
         setLocation(`/forum/${data.slug}`);
       } else {
         setLocation("/forum");
@@ -40,7 +41,7 @@ export default function NewThread() {
     },
     onError: (error) => {
       console.error("Failed to create thread:", error);
-      alert("Failed to create thread. Please try again.");
+      toast.error("Failed to create thread. Please try again.");
     }
   });
 

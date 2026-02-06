@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { trpc } from "@/lib/trpc";
 import { Calendar as CalendarIcon, DollarSign, MapPin, Clock, Search, Plus, Video, Users, Award, ExternalLink, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,9 +27,22 @@ export default function Events() {
 
   // Refetch data when component mounts
   useEffect(() => {
+    console.log('🔄 Events page mounted, refetching data...');
     refetchEvents();
     refetchOpportunities();
   }, []);
+
+  // Log when data changes
+  useEffect(() => {
+    console.log('📊 Events data updated:', events?.length || 0, 'events');
+    console.log('📊 Opportunities data updated:', opportunities?.length || 0, 'opportunities');
+    if (events && events.length > 0) {
+      console.log('📅 Sample event:', events[0]);
+    }
+    if (opportunities && opportunities.length > 0) {
+      console.log('🎯 Sample opportunity:', opportunities[0]);
+    }
+  }, [events, opportunities]);
 
   // Combine events and opportunities into one list
   const allItems = [
@@ -184,28 +198,21 @@ export default function Events() {
     <Dialog open={!!item} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl mb-2">{item?.title}</DialogTitle>
-              <div className="flex items-center gap-2 mb-4">
-                <Badge 
-                  variant="outline" 
-                  className={item?.itemType === 'event' ? 'border-blue-500 text-blue-600' : 'border-green-500 text-green-600'}
-                >
-                  {item?.itemType === 'event' ? 'Event' : 'Opportunity'}
-                </Badge>
-                {item?.type && <Badge variant="secondary">{item.type}</Badge>}
-                {item?.category && <Badge variant="outline">{item.category}</Badge>}
-                {item?.featured && (
-                  <Badge className="bg-gradient-to-r from-orange-500 to-red-500">
-                    Featured
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogTitle className="text-2xl mb-2">{item?.title}</DialogTitle>
+          <div className="flex items-center gap-2 mb-4">
+            <Badge 
+              variant="outline" 
+              className={item?.itemType === 'event' ? 'border-blue-500 text-blue-600' : 'border-green-500 text-green-600'}
+            >
+              {item?.itemType === 'event' ? 'Event' : 'Opportunity'}
+            </Badge>
+            {item?.type && <Badge variant="secondary">{item.type}</Badge>}
+            {item?.category && <Badge variant="outline">{item.category}</Badge>}
+            {item?.featured && (
+              <Badge className="bg-gradient-to-r from-orange-500 to-red-500">
+                Featured
+              </Badge>
+            )}
           </div>
         </DialogHeader>
 
@@ -403,8 +410,10 @@ export default function Events() {
               <Button 
                 variant="outline" 
                 onClick={() => {
+                  console.log('🔄 Manual refresh triggered');
                   refetchEvents();
                   refetchOpportunities();
+                  toast.success("Refreshed!");
                 }}
                 className="gap-2"
               >
@@ -597,110 +606,102 @@ export default function Events() {
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
                     <Card 
-                      className={`h-full cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 ${
+                      className={`group relative h-full cursor-pointer overflow-hidden backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] ${
                         item.itemType === 'event' 
-                          ? (item.startDate && isExpired(item.startDate) ? 'opacity-60' : 'border-l-4 border-l-blue-500')
-                          : (item.deadline && isExpired(item.deadline) ? 'opacity-60' : 'border-l-4 border-l-green-500')
+                          ? (item.startDate && isExpired(item.startDate) ? 'opacity-60' : '')
+                          : (item.deadline && isExpired(item.deadline) ? 'opacity-60' : '')
                       }`}
                       onClick={() => setSelectedItem(item)}
                     >
+                      {/* Gradient Overlay */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${
+                        item.itemType === 'event' 
+                          ? 'from-blue-500/10 via-transparent to-purple-500/10' 
+                          : 'from-green-500/10 via-transparent to-emerald-500/10'
+                      } opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                      
                       {/* Image */}
-                      {item.imageUrl && (
-                        <div className="w-full h-32 overflow-hidden rounded-t-lg">
-                          <img 
-                            src={item.imageUrl} 
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                          />
+                      <div className="relative w-full h-32 overflow-hidden">
+                        <img 
+                          src={item.imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop'} 
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        {/* Gradient overlay on image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                        
+                        {/* Badges on image */}
+                        <div className="absolute top-3 right-3 flex gap-2">
+                          {item.featured && (
+                            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-xs shadow-lg">
+                              ⭐ Featured
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                      
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg line-clamp-2 mb-1">{item.title}</CardTitle>
-                            <div className="flex items-center gap-2">
-                              <Badge 
-                                variant="outline" 
-                                className={item.itemType === 'event' ? 'border-blue-500 text-blue-600' : 'border-green-500 text-green-600'}
-                              >
-                                {item.itemType === 'event' ? 'Event' : 'Opportunity'}
-                              </Badge>
-                              {item.featured && (
-                                <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-xs">
-                                  Featured
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
+                        
+                        {/* Type badge */}
+                        <div className="absolute bottom-3 left-3">
+                          <Badge 
+                            className={`${
+                              item.itemType === 'event' 
+                                ? 'bg-blue-500/90 hover:bg-blue-600' 
+                                : 'bg-green-500/90 hover:bg-green-600'
+                            } text-white backdrop-blur-sm`}
+                          >
+                            {item.itemType === 'event' ? '📅 Event' : '🎯 Opportunity'}
+                          </Badge>
                         </div>
-                      </CardHeader>
+                      </div>
                       
-                      <CardContent className="pt-0">
-                        <div className="space-y-2 text-sm text-muted-foreground mb-3">
+                      <CardContent className="relative p-4 space-y-3">
+                        {/* Title */}
+                        <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                          {item.title}
+                        </h3>
+                        
+                        {/* Key Info - Minimal */}
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           {item.itemType === 'event' ? (
                             <>
                               {item.startDate && (
                                 <div className="flex items-center gap-1">
-                                  <CalendarIcon className="h-3 w-3" />
-                                  {formatDate(item.startDate)}
+                                  <CalendarIcon className="h-3.5 w-3.5" />
+                                  <span>{formatDate(item.startDate)}</span>
                                 </div>
                               )}
                               {item.virtual ? (
                                 <div className="flex items-center gap-1">
-                                  <Video className="h-3 w-3" />
-                                  Virtual Event
+                                  <Video className="h-3.5 w-3.5" />
+                                  <span>Virtual</span>
                                 </div>
                               ) : item.location && (
                                 <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {item.location}
-                                </div>
-                              )}
-                              {item.organizer && (
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  {item.organizer}
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  <span className="truncate">{item.location}</span>
                                 </div>
                               )}
                             </>
                           ) : (
                             <>
-                              {item.provider && (
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  {item.provider}
-                                </div>
-                              )}
                               {item.deadline && (
                                 <div className={`flex items-center gap-1 ${isExpired(item.deadline) ? 'text-red-500' : 'text-orange-500'}`}>
-                                  <Clock className="h-3 w-3" />
-                                  {formatDeadline(item.deadline)}
+                                  <Clock className="h-3.5 w-3.5" />
+                                  <span>{formatDeadline(item.deadline)}</span>
                                 </div>
                               )}
                               {item.amount && (
                                 <div className="flex items-center gap-1 text-green-600">
-                                  <DollarSign className="h-3 w-3" />
-                                  {item.currency || "USD"} {item.amount}
+                                  <DollarSign className="h-3.5 w-3.5" />
+                                  <span>{item.currency || "USD"} {item.amount}</span>
                                 </div>
                               )}
                             </>
                           )}
                         </div>
 
-                        {item.description && (
-                          <CardDescription className="line-clamp-2 mb-3">
-                            {item.description}
-                          </CardDescription>
-                        )}
-
-                        <div className="flex flex-wrap gap-1">
-                          {item.type && (
-                            <Badge variant="secondary" className="text-xs">{item.type}</Badge>
-                          )}
-                          {item.category && (
-                            <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                          )}
+                        {/* Click hint */}
+                        <div className="text-xs text-muted-foreground/60 group-hover:text-primary/80 transition-colors">
+                          Click for details →
                         </div>
                       </CardContent>
                     </Card>
@@ -729,76 +730,71 @@ export default function Events() {
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
                     <Card 
-                      className={`h-full cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 border-l-4 border-l-blue-500 ${
+                      className={`group relative h-full cursor-pointer overflow-hidden backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] ${
                         event.startDate && isExpired(event.startDate) ? 'opacity-60' : ''
                       }`}
                       onClick={() => setSelectedItem(event)}
                     >
-                      {/* Image */}
-                      {event.imageUrl && (
-                        <div className="w-full h-32 overflow-hidden rounded-t-lg">
-                          <img 
-                            src={event.imageUrl} 
-                            alt={event.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg line-clamp-2 flex-1">{event.title}</CardTitle>
+                      {/* Image */}
+                      <div className="relative w-full h-32 overflow-hidden">
+                        <img 
+                          src={event.imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop'} 
+                          alt={event.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        {/* Gradient overlay on image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                        
+                        {/* Badges on image */}
+                        <div className="absolute top-3 right-3 flex gap-2">
                           {event.featured && (
-                            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 ml-2 text-xs">
-                              Featured
+                            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-xs shadow-lg">
+                              ⭐ Featured
                             </Badge>
                           )}
                         </div>
-                      </CardHeader>
+                        
+                        {/* Type badge */}
+                        <div className="absolute bottom-3 left-3">
+                          <Badge className="bg-blue-500/90 hover:bg-blue-600 text-white backdrop-blur-sm">
+                            📅 Event
+                          </Badge>
+                        </div>
+                      </div>
                       
-                      <CardContent className="pt-0">
-                        <div className="space-y-2 text-sm text-muted-foreground mb-3">
+                      <CardContent className="relative p-4 space-y-3">
+                        {/* Title */}
+                        <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                          {event.title}
+                        </h3>
+                        
+                        {/* Key Info - Minimal */}
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           {event.startDate && (
                             <div className="flex items-center gap-1">
-                              <CalendarIcon className="h-3 w-3" />
-                              {formatDate(event.startDate)} at {formatTime(event.startDate)}
+                              <CalendarIcon className="h-3.5 w-3.5" />
+                              <span>{formatDate(event.startDate)}</span>
                             </div>
                           )}
                           {event.virtual ? (
                             <div className="flex items-center gap-1">
-                              <Video className="h-3 w-3" />
-                              Virtual Event
+                              <Video className="h-3.5 w-3.5" />
+                              <span>Virtual</span>
                             </div>
                           ) : event.location && (
                             <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {event.location}
-                            </div>
-                          )}
-                          {event.organizer && (
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {event.organizer}
+                              <MapPin className="h-3.5 w-3.5" />
+                              <span className="truncate">{event.location}</span>
                             </div>
                           )}
                         </div>
 
-                        {event.description && (
-                          <CardDescription className="line-clamp-2 mb-3">
-                            {event.description}
-                          </CardDescription>
-                        )}
-
-                        <div className="flex flex-wrap gap-1">
-                          {event.type && (
-                            <Badge variant="secondary" className="text-xs">{event.type}</Badge>
-                          )}
-                          {event.category && (
-                            <Badge variant="outline" className="text-xs">{event.category}</Badge>
-                          )}
-                          {event.capacity && (
-                            <Badge variant="outline" className="text-xs">{event.capacity} spots</Badge>
-                          )}
+                        {/* Click hint */}
+                        <div className="text-xs text-muted-foreground/60 group-hover:text-primary/80 transition-colors">
+                          Click for details →
                         </div>
                       </CardContent>
                     </Card>
@@ -827,73 +823,66 @@ export default function Events() {
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
                     <Card 
-                      className={`h-full cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 border-l-4 border-l-green-500 ${
+                      className={`group relative h-full cursor-pointer overflow-hidden backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] ${
                         opportunity.deadline && isExpired(opportunity.deadline) ? 'opacity-60' : ''
                       }`}
                       onClick={() => setSelectedItem(opportunity)}
                     >
-                      {/* Image */}
-                      {opportunity.imageUrl && (
-                        <div className="w-full h-32 overflow-hidden rounded-t-lg">
-                          <img 
-                            src={opportunity.imageUrl} 
-                            alt={opportunity.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg line-clamp-2 mb-1">{opportunity.title}</CardTitle>
-                            {opportunity.deadline && isExpired(opportunity.deadline) && (
-                              <Badge variant="destructive" className="text-xs">Expired</Badge>
-                            )}
-                          </div>
+                      {/* Image */}
+                      <div className="relative w-full h-32 overflow-hidden">
+                        <img 
+                          src={opportunity.imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop'} 
+                          alt={opportunity.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        {/* Gradient overlay on image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                        
+                        {/* Badges on image */}
+                        <div className="absolute top-3 right-3 flex gap-2">
                           {opportunity.featured && (
-                            <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 ml-2 text-xs">
-                              Featured
+                            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-xs shadow-lg">
+                              ⭐ Featured
                             </Badge>
                           )}
                         </div>
-                      </CardHeader>
+                        
+                        {/* Type badge */}
+                        <div className="absolute bottom-3 left-3">
+                          <Badge className="bg-green-500/90 hover:bg-green-600 text-white backdrop-blur-sm">
+                            🎯 Opportunity
+                          </Badge>
+                        </div>
+                      </div>
                       
-                      <CardContent className="pt-0">
-                        <div className="space-y-2 text-sm text-muted-foreground mb-3">
-                          {opportunity.provider && (
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {opportunity.provider}
-                            </div>
-                          )}
+                      <CardContent className="relative p-4 space-y-3">
+                        {/* Title */}
+                        <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                          {opportunity.title}
+                        </h3>
+                        
+                        {/* Key Info - Minimal */}
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           {opportunity.deadline && (
                             <div className={`flex items-center gap-1 ${isExpired(opportunity.deadline) ? 'text-red-500' : 'text-orange-500'}`}>
-                              <Clock className="h-3 w-3" />
-                              {formatDeadline(opportunity.deadline)}
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>{formatDeadline(opportunity.deadline)}</span>
                             </div>
                           )}
                           {opportunity.amount && (
                             <div className="flex items-center gap-1 text-green-600">
-                              <DollarSign className="h-3 w-3" />
-                              {opportunity.currency || "USD"} {opportunity.amount}
+                              <DollarSign className="h-3.5 w-3.5" />
+                              <span>{opportunity.currency || "USD"} {opportunity.amount}</span>
                             </div>
                           )}
                         </div>
 
-                        {opportunity.description && (
-                          <CardDescription className="line-clamp-2 mb-3">
-                            {opportunity.description}
-                          </CardDescription>
-                        )}
-
-                        <div className="flex flex-wrap gap-1">
-                          {opportunity.type && (
-                            <Badge variant="secondary" className="text-xs">{opportunity.type}</Badge>
-                          )}
-                          {opportunity.category && (
-                            <Badge variant="outline" className="text-xs">{opportunity.category}</Badge>
-                          )}
+                        {/* Click hint */}
+                        <div className="text-xs text-muted-foreground/60 group-hover:text-primary/80 transition-colors">
+                          Click for details →
                         </div>
                       </CardContent>
                     </Card>

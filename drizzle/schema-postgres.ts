@@ -18,6 +18,8 @@ export const users = pgTable("users", {
   github: varchar("github", { length: 255 }),
   twitter: varchar("twitter", { length: 255 }),
   linkedin: varchar("linkedin", { length: 255 }),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  avatar: varchar("avatar", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

@@ -98,6 +98,7 @@ const sampleMarkers: MapMarker[] = [
 
 export default function UgandaMapComponent() {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
 
   const getMarkerIcon = (type: string) => {
     switch (type) {
@@ -137,11 +138,6 @@ export default function UgandaMapComponent() {
           <div className="absolute inset-0 flex items-center justify-center">
             <svg viewBox="0 0 400 500" className="w-full h-full max-w-md">
               <defs>
-                <linearGradient id="ugandaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(59, 130, 246, 0.3)" />
-                  <stop offset="50%" stopColor="rgba(139, 92, 246, 0.3)" />
-                  <stop offset="100%" stopColor="rgba(236, 72, 153, 0.3)" />
-                </linearGradient>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                   <feMerge> 
@@ -150,112 +146,6 @@ export default function UgandaMapComponent() {
                   </feMerge>
                 </filter>
               </defs>
-              
-              {/* Accurate Uganda outline with Lake Victoria */}
-              <motion.path
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 2, ease: "easeInOut" }}
-                d="M 160 80
-                   L 180 75
-                   L 200 78
-                   L 220 85
-                   L 240 95
-                   L 255 110
-                   L 270 130
-                   L 280 150
-                   L 285 170
-                   L 288 190
-                   L 285 210
-                   L 280 230
-                   L 270 250
-                   L 255 265
-                   L 240 275
-                   L 220 280
-                   L 200 282
-                   L 180 280
-                   L 160 275
-                   L 145 265
-                   L 135 250
-                   L 130 230
-                   L 128 210
-                   L 130 190
-                   L 135 170
-                   L 145 150
-                   L 155 130
-                   L 160 110
-                   L 158 95
-                   Z
-                   
-                   M 170 240
-                   C 180 245, 200 248, 220 245
-                   C 235 242, 245 235, 250 225
-                   C 248 215, 240 210, 225 212
-                   C 210 214, 190 218, 175 225
-                   C 165 230, 168 238, 170 240
-                   Z"
-                fill="url(#ugandaGradient)"
-                stroke="rgba(59, 130, 246, 0.8)"
-                strokeWidth="2"
-                filter="url(#glow)"
-                className="drop-shadow-lg"
-                fillRule="evenodd"
-              />
-
-              {/* Regional divisions - positioned according to actual Uganda geography */}
-              <g className="opacity-60">
-                {/* Central Region - around Kampala/Lake Victoria area */}
-                <motion.circle
-                  cx="200" cy="220"
-                  r="25"
-                  fill="rgba(59, 130, 246, 0.2)"
-                  stroke="rgba(59, 130, 246, 0.6)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                  onMouseEnter={() => setHoveredRegion('Central')}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  className="cursor-pointer"
-                />
-                
-                {/* Eastern Region - right side */}
-                <motion.circle
-                  cx="250" cy="180"
-                  r="20"
-                  fill="rgba(139, 92, 246, 0.2)"
-                  stroke="rgba(139, 92, 246, 0.6)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                  onMouseEnter={() => setHoveredRegion('Eastern')}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  className="cursor-pointer"
-                />
-                
-                {/* Northern Region - top */}
-                <motion.circle
-                  cx="200" cy="120"
-                  r="22"
-                  fill="rgba(236, 72, 153, 0.2)"
-                  stroke="rgba(236, 72, 153, 0.6)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                  onMouseEnter={() => setHoveredRegion('Northern')}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  className="cursor-pointer"
-                />
-                
-                {/* Western Region - left side */}
-                <motion.circle
-                  cx="150" cy="190"
-                  r="18"
-                  fill="rgba(16, 185, 129, 0.2)"
-                  stroke="rgba(16, 185, 129, 0.6)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                  onMouseEnter={() => setHoveredRegion('Western')}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  className="cursor-pointer"
-                />
-              </g>
 
               {/* Tech ecosystem markers - showing all sample data */}
               {sampleMarkers.map((marker, index) => {
@@ -269,6 +159,7 @@ export default function UgandaMapComponent() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: index * 0.2, duration: 0.5 }}
                     className="cursor-pointer"
+                    onClick={() => setSelectedMarker(marker)}
                   >
                     {/* Pulsing circle */}
                     <motion.circle
@@ -282,34 +173,19 @@ export default function UgandaMapComponent() {
                       transition={{ duration: 2, repeat: Infinity }}
                     />
                     
-                    {/* Main marker */}
+                    {/* Main marker dot */}
                     <circle
                       cx={pos.x}
                       cy={pos.y}
-                      r="8"
+                      r="6"
                       fill={marker.type === 'hub' ? '#3b82f6' : 
                             marker.type === 'community' ? '#8b5cf6' : 
                             '#ec4899'}
                       stroke="white"
                       strokeWidth="2"
                       filter="url(#glow)"
+                      className="hover:r-8 transition-all"
                     />
-                    
-                    {/* Icon */}
-                    <foreignObject x={pos.x - 6} y={pos.y - 6} width="12" height="12">
-                      <Icon className="w-3 h-3 text-white" />
-                    </foreignObject>
-                    
-                    {/* Label */}
-                    <text
-                      x={pos.x}
-                      y={pos.y + 20}
-                      textAnchor="middle"
-                      className="fill-white text-xs font-medium"
-                      style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}
-                    >
-                      {marker.name}
-                    </text>
                   </motion.g>
                 );
               })}
@@ -350,24 +226,76 @@ export default function UgandaMapComponent() {
             </div>
           </div>
 
-          {/* Region Info Display */}
-          {hoveredRegion && (
+          {/* Region Info Display - removed, now using marker popups */}
+          
+          {/* Marker Info Popup */}
+          {selectedMarker && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg p-3 border border-purple-500/30"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 backdrop-blur-md rounded-lg p-6 border border-blue-500/50 shadow-2xl max-w-md z-50"
             >
-              <div className="text-purple-400 font-mono text-sm">
-                {hoveredRegion} Region
+              <button
+                onClick={() => setSelectedMarker(null)}
+                className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              
+              <div className="flex items-start gap-3 mb-4">
+                {(() => {
+                  const Icon = getMarkerIcon(selectedMarker.type);
+                  return (
+                    <div className={`p-2 rounded-lg ${
+                      selectedMarker.type === 'hub' ? 'bg-blue-500/20' :
+                      selectedMarker.type === 'community' ? 'bg-purple-500/20' :
+                      'bg-pink-500/20'
+                    }`}>
+                      <Icon className={`w-6 h-6 ${
+                        selectedMarker.type === 'hub' ? 'text-blue-400' :
+                        selectedMarker.type === 'community' ? 'text-purple-400' :
+                        'text-pink-400'
+                      }`} />
+                    </div>
+                  );
+                })()}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-1">{selectedMarker.name}</h3>
+                  <Badge className={`${
+                    selectedMarker.type === 'hub' ? 'bg-blue-500/20 text-blue-300' :
+                    selectedMarker.type === 'community' ? 'bg-purple-500/20 text-purple-300' :
+                    'bg-pink-500/20 text-pink-300'
+                  } border-0`}>
+                    {selectedMarker.category || selectedMarker.type}
+                  </Badge>
+                </div>
               </div>
-              <div className="text-xs text-purple-300">
-                {sampleMarkers.filter(m => {
-                  if (hoveredRegion === 'Central') return m.location.includes('Kampala');
-                  if (hoveredRegion === 'Eastern') return m.location.includes('Jinja');
-                  if (hoveredRegion === 'Western') return m.location.includes('Mbarara');
-                  if (hoveredRegion === 'Northern') return m.location.includes('Gulu');
-                  return false;
-                }).length} entities
+              
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-2 text-gray-300">
+                  <MapPin className="w-4 h-4 text-blue-400" />
+                  <span>{selectedMarker.location}</span>
+                </div>
+                
+                {selectedMarker.description && (
+                  <p className="text-gray-300 leading-relaxed">
+                    {selectedMarker.description}
+                  </p>
+                )}
+                
+                {selectedMarker.website && (
+                  <a
+                    href={selectedMarker.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Visit Website</span>
+                  </a>
+                )}
               </div>
             </motion.div>
           )}

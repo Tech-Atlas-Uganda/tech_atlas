@@ -43,6 +43,17 @@ interface Entity {
   memberCount?: number | null;
   stage?: string | null;
   industry?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  slack?: string | null;
+  discord?: string | null;
+  telegram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  founded?: number | null;
+  teamSize?: number | null;
+  logo?: string | null;
 }
 
 export default function Ecosystem() {
@@ -299,70 +310,75 @@ export default function Ecosystem() {
     }
   }, [activeTab, searchQuery, selectedLocation, viewMode, hubs, communities, startups]);
 
-  const renderEntityCard = (entity: Entity, index: number, type: EntityType) => (
-    <motion.div
-      key={entity.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-    >
-      <Link href={`/ecosystem/${type}s/${entity.slug}`}>
-        <a>
-          <Card className="h-full hover:shadow-lg transition-all hover:-translate-y-1">
-            <CardHeader>
-              <div className="flex items-start justify-between mb-2">
-                <CardTitle className="text-xl">{entity.name}</CardTitle>
-                <div className="flex items-center gap-2 ml-2">
-                  {entity.verified && (
-                    <Badge variant="secondary">Verified</Badge>
-                  )}
-                </div>
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+  const [selectedEntityType, setSelectedEntityType] = useState<EntityType | null>(null);
+
+  const renderEntityCard = (entity: Entity, index: number, type: EntityType) => {
+    const colorClasses = {
+      hub: {
+        bg: 'from-blue-500/10 to-blue-600/10',
+        border: 'border-blue-500/20',
+        badge: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+        icon: 'text-blue-500'
+      },
+      community: {
+        bg: 'from-purple-500/10 to-purple-600/10',
+        border: 'border-purple-500/20',
+        badge: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+        icon: 'text-purple-500'
+      },
+      startup: {
+        bg: 'from-pink-500/10 to-pink-600/10',
+        border: 'border-pink-500/20',
+        badge: 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
+        icon: 'text-pink-500'
+      }
+    };
+
+    const colors = colorClasses[type];
+    const Icon = type === 'hub' ? Building2 : type === 'community' ? Users : Rocket;
+
+    return (
+      <motion.div
+        key={entity.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: index * 0.05 }}
+      >
+        <Card 
+          className={`h-full cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br ${colors.bg} border-2 ${colors.border} backdrop-blur-sm`}
+          onClick={() => {
+            setSelectedEntity(entity);
+            setSelectedEntityType(type);
+          }}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-start gap-3 mb-2">
+              <div className={`p-2 rounded-lg bg-white/50 dark:bg-black/20`}>
+                <Icon className={`h-5 w-5 ${colors.icon}`} />
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                {entity.location && (
-                  <div className="flex items-center">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {entity.location}
-                  </div>
-                )}
-                {entity.type && (
-                  <Badge variant="outline" className="text-xs">{entity.type}</Badge>
-                )}
-                {entity.memberCount && (
-                  <span className="text-xs">{entity.memberCount} members</span>
-                )}
-                {entity.stage && (
-                  <Badge variant="outline" className="text-xs">{entity.stage}</Badge>
-                )}
-                {entity.industry && (
-                  <span className="text-xs">{entity.industry}</span>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg line-clamp-2 mb-1">{entity.name}</CardTitle>
+                {entity.verified && (
+                  <Badge className={`${colors.badge} border-0 text-xs`}>
+                    ✓ Verified
+                  </Badge>
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="line-clamp-3 mb-4">
-                {entity.description || "No description available"}
-              </CardDescription>
-              {entity.focusAreas && entity.focusAreas.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {entity.focusAreas.slice(0, 3).map((area: string) => (
-                    <Badge key={area} variant="outline" className="text-xs">
-                      {area}
-                    </Badge>
-                  ))}
-                  {entity.focusAreas.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{entity.focusAreas.length - 3}
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </a>
-      </Link>
-    </motion.div>
-  );
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {entity.location && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                <MapPin className="h-3 w-3" />
+                <span className="truncate">{entity.location}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -540,7 +556,7 @@ export default function Ecosystem() {
                     <p className="text-muted-foreground">No hubs found matching your search.</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                     {filteredHubs.map((hub, index) => renderEntityCard(hub, index, "hub"))}
                   </div>
                 )}
@@ -556,7 +572,7 @@ export default function Ecosystem() {
                     <p className="text-muted-foreground">No communities found matching your search.</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                     {filteredCommunities.map((community, index) => renderEntityCard(community, index, "community"))}
                   </div>
                 )}
@@ -572,7 +588,7 @@ export default function Ecosystem() {
                     <p className="text-muted-foreground">No startups found matching your search.</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                     {filteredStartups.map((startup, index) => renderEntityCard(startup, index, "startup"))}
                   </div>
                 )}
@@ -580,6 +596,259 @@ export default function Ecosystem() {
             </>
           )}
         </Tabs>
+
+        {/* Entity Detail Modal */}
+        <Dialog open={!!selectedEntity} onOpenChange={() => setSelectedEntity(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            {selectedEntity && selectedEntityType && (
+              <>
+                <DialogHeader>
+                  <div className="flex items-start gap-3">
+                    {(() => {
+                      const Icon = selectedEntityType === 'hub' ? Building2 : selectedEntityType === 'community' ? Users : Rocket;
+                      const colorClass = selectedEntityType === 'hub' ? 'text-blue-500 bg-blue-500/10' : 
+                                        selectedEntityType === 'community' ? 'text-purple-500 bg-purple-500/10' : 
+                                        'text-pink-500 bg-pink-500/10';
+                      return (
+                        <div className={`p-3 rounded-lg ${colorClass}`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      );
+                    })()}
+                    <div className="flex-1">
+                      <DialogTitle className="text-2xl mb-2">{selectedEntity.name}</DialogTitle>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {selectedEntity.verified && (
+                          <Badge className={`${
+                            selectedEntityType === 'hub' ? 'bg-blue-500/20 text-blue-600' :
+                            selectedEntityType === 'community' ? 'bg-purple-500/20 text-purple-600' :
+                            'bg-pink-500/20 text-pink-600'
+                          } border-0`}>
+                            ✓ Verified
+                          </Badge>
+                        )}
+                        {selectedEntity.type && (
+                          <Badge variant="outline">{selectedEntity.type}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </DialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  {/* Location */}
+                  {(selectedEntity.location || selectedEntity.address) && (
+                    <div>
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Location
+                      </h4>
+                      <p className="text-muted-foreground">
+                        {selectedEntity.address || selectedEntity.location}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Description */}
+                  {selectedEntity.description && (
+                    <div>
+                      <h4 className="font-semibold mb-2">About</h4>
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {selectedEntity.description}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Focus Areas */}
+                  {selectedEntity.focusAreas && selectedEntity.focusAreas.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-2">Focus Areas</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedEntity.focusAreas.map((area: string) => (
+                          <Badge key={area} variant="secondary">
+                            {area}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Contact Information */}
+                  {(selectedEntity.email || selectedEntity.phone || selectedEntity.website) && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Contact Information</h4>
+                      <div className="space-y-2">
+                        {selectedEntity.website && (
+                          <a 
+                            href={selectedEntity.website.startsWith('http') ? selectedEntity.website : `https://${selectedEntity.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                            <span className="truncate">{selectedEntity.website}</span>
+                          </a>
+                        )}
+                        {selectedEntity.email && (
+                          <a 
+                            href={`mailto:${selectedEntity.email}`}
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span className="truncate">{selectedEntity.email}</span>
+                          </a>
+                        )}
+                        {selectedEntity.phone && (
+                          <a 
+                            href={`tel:${selectedEntity.phone}`}
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span>{selectedEntity.phone}</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Social Links */}
+                  {(selectedEntity.twitter || selectedEntity.linkedin || selectedEntity.slack || selectedEntity.discord || selectedEntity.telegram) && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Social & Community</h4>
+                      <div className="space-y-2">
+                        {selectedEntity.twitter && (
+                          <a 
+                            href={selectedEntity.twitter.startsWith('http') ? selectedEntity.twitter : `https://twitter.com/${selectedEntity.twitter.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                            <span>Twitter/X</span>
+                          </a>
+                        )}
+                        {selectedEntity.linkedin && (
+                          <a 
+                            href={selectedEntity.linkedin.startsWith('http') ? selectedEntity.linkedin : `https://linkedin.com/company/${selectedEntity.linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                            <span>LinkedIn</span>
+                          </a>
+                        )}
+                        {selectedEntity.slack && (
+                          <a 
+                            href={selectedEntity.slack}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                            </svg>
+                            <span>Slack</span>
+                          </a>
+                        )}
+                        {selectedEntity.discord && (
+                          <a 
+                            href={selectedEntity.discord}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+                            </svg>
+                            <span>Discord</span>
+                          </a>
+                        )}
+                        {selectedEntity.telegram && (
+                          <a 
+                            href={selectedEntity.telegram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345c-.48.33-.913.49-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789c.027-.216.325-.437.893-.663c3.498-1.524 5.83-2.529 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                            <span>Telegram</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Additional Details */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedEntity.type && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm">Type</h4>
+                        <Badge variant="outline" className="text-sm">
+                          {selectedEntity.type}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.memberCount && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          Members
+                        </h4>
+                        <p className="text-muted-foreground text-sm">
+                          {selectedEntity.memberCount.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.stage && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm">Stage</h4>
+                        <Badge variant="outline" className="text-sm">
+                          {selectedEntity.stage}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.industry && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm">Industry</h4>
+                        <p className="text-muted-foreground text-sm">{selectedEntity.industry}</p>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.founded && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm">Founded</h4>
+                        <p className="text-muted-foreground text-sm">{selectedEntity.founded}</p>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.teamSize && (
+                      <div>
+                        <h4 className="font-semibold mb-1 text-sm">Team Size</h4>
+                        <p className="text-muted-foreground text-sm">{selectedEntity.teamSize} people</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Submission Modals */}
         <Dialog open={!!showSubmissionModal} onOpenChange={() => setShowSubmissionModal(null)}>

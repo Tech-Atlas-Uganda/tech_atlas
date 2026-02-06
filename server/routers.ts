@@ -20,7 +20,7 @@ function generateSlug(text: string): string {
 
 // Role-based procedures
 const moderatorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const allowedRoles = ['moderator', 'editor', 'admin', 'core_admin'];
+  const allowedRoles = ['moderator', 'editor', 'admin'];
   if (!allowedRoles.includes(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Moderator access or higher required' });
   }
@@ -28,7 +28,7 @@ const moderatorProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 const editorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const allowedRoles = ['editor', 'admin', 'core_admin'];
+  const allowedRoles = ['editor', 'admin'];
   if (!allowedRoles.includes(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Editor access or higher required' });
   }
@@ -36,16 +36,8 @@ const editorProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const allowedRoles = ['admin', 'core_admin'];
-  if (!allowedRoles.includes(ctx.user.role)) {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access or higher required' });
-  }
-  return next({ ctx });
-});
-
-const coreAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'core_admin') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Core admin access required' });
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
   }
   return next({ ctx });
 });
@@ -77,11 +69,16 @@ export const appRouter = router({
         github: z.string().optional(),
         twitter: z.string().optional(),
         linkedin: z.string().optional(),
+        isPublic: z.boolean().optional(),
+        avatar: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.updateUserProfile(ctx.user.id, input);
         return { success: true };
       }),
+    listPublicProfiles: publicProcedure.query(async () => {
+      return await db.getPublicUsers();
+    }),
   }),
 
   // Hub management
@@ -1359,24 +1356,74 @@ export const appRouter = router({
   // Dashboard statistics (public)
   stats: router({
     getCounts: publicProcedure.query(async () => {
+      console.log('📊 Fetching platform statistics...');
+      
+      // Try primary database first
       try {
-        return await db.getContentStats();
-      } catch (error) {
-        console.warn('Primary database failed for stats, using local database:', error);
-        const localStats = localDB.getStats();
-        return {
-          hubs: localStats.hubs,
-          communities: localStats.communities,
-          startups: localStats.startups,
-          jobs: localStats.jobs,
-          gigs: localStats.gigs,
-          events: localStats.events,
-          learningResources: localStats.learningResources,
-          opportunities: localStats.opportunities,
-          blog: 0,
-          users: 1
-        };
+        const stats = await db.getContentStats();
+        if (stats) {
+          console.log('✅ Stats from primary database:', stats);
+          return stats;
+        }
+      } catch (primaryError) {
+        console.warn('❌ Primary database failed for stats:', primaryError);
       }
+      
+      // Try Supabase client as fallback
+      try {
+        console.log('📊 Trying Supabase client for stats...');
+        const [
+          hubsResult,
+          communitiesResult,
+          startupsResult,
+          jobsResult,
+          gigsResult,
+          eventsResult,
+          opportunitiesResult,
+          learningResult
+        ] = await Promise.all([
+          dbSupabase.getHubsSupabase({ status: 'approved' }),
+          dbSupabase.getCommunitiesSupabase({ status: 'approved' }),
+          dbSupabase.getStartupsSupabase({ status: 'approved' }),
+          dbSupabase.getJobsSupabase({ status: 'approved' }),
+          dbSupabase.getGigsSupabase({ status: 'approved' }),
+          dbSupabase.getEventsSupabase({ status: 'approved' }),
+          dbSupabase.getOpportunitiesSupabase({ status: 'approved' }),
+          dbSupabase.getLearningResourcesSupabase({ status: 'approved' })
+        ]);
+        
+        const supabaseStats = {
+          hubs: hubsResult?.length || 0,
+          communities: communitiesResult?.length || 0,
+          startups: startupsResult?.length || 0,
+          jobs: jobsResult?.length || 0,
+          gigs: gigsResult?.length || 0,
+          events: eventsResult?.length || 0,
+          opportunities: opportunitiesResult?.length || 0,
+          learningResources: learningResult?.length || 0,
+          blogPosts: 0, // Blog posts not implemented yet
+        };
+        
+        console.log('✅ Stats from Supabase client:', supabaseStats);
+        return supabaseStats;
+      } catch (supabaseError) {
+        console.warn('❌ Supabase client failed for stats:', supabaseError);
+      }
+      
+      // Use local database as final fallback
+      console.log('⚠️ Using local database for stats...');
+      const localStats = localDB.getStats();
+      return {
+        hubs: localStats.hubs,
+        communities: localStats.communities,
+        startups: localStats.startups,
+        jobs: localStats.jobs,
+        gigs: localStats.gigs,
+        events: localStats.events,
+        learningResources: localStats.learningResources,
+        opportunities: localStats.opportunities,
+        blogPosts: 0,
+      };
     }),
 
     // Debug endpoint to check database status
@@ -1400,16 +1447,14 @@ export const appRouter = router({
       return await db.getContentStats();
     }),
 
-    // Role management (Core Admin only)
-    getRoleHierarchy: coreAdminProcedure.query(async () => {
+    // Role management (Admin only)
+    getRoleHierarchy: adminProcedure.query(async () => {
       // This would fetch from role_hierarchy table
       return [
         { roleName: 'user', displayName: 'Community Member', level: 1 },
-        { roleName: 'contributor', displayName: 'Content Contributor', level: 2 },
-        { roleName: 'moderator', displayName: 'Content Moderator', level: 3 },
-        { roleName: 'editor', displayName: 'Content Editor', level: 4 },
-        { roleName: 'admin', displayName: 'Platform Administrator', level: 5 },
-        { roleName: 'core_admin', displayName: 'Core Administrator', level: 6 },
+        { roleName: 'moderator', displayName: 'Content Moderator', level: 2 },
+        { roleName: 'editor', displayName: 'Content Editor', level: 3 },
+        { roleName: 'admin', displayName: 'Platform Administrator', level: 4 },
       ];
     }),
 
@@ -1417,10 +1462,10 @@ export const appRouter = router({
       return await db.getAllUsers();
     }),
 
-    updateUserRole: coreAdminProcedure
+    updateUserRole: adminProcedure
       .input(z.object({
         userId: z.number(),
-        newRole: z.enum(['user', 'contributor', 'moderator', 'editor', 'admin', 'core_admin']),
+        newRole: z.enum(['user', 'moderator', 'editor', 'admin']),
         reason: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {

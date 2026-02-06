@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { ArrowLeft, MessageSquare, ThumbsUp, ThumbsDown, Eye, Clock, User, Send, Pin } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -44,7 +45,7 @@ export default function ThreadDetail() {
     },
     onError: (error) => {
       console.error("Failed to create reply:", error);
-      alert("Failed to post reply. Please try again.");
+      toast.error("Failed to post reply. Please try again.");
     }
   });
 
@@ -56,7 +57,7 @@ export default function ThreadDetail() {
     },
     onError: (error) => {
       console.error("Failed to vote:", error);
-      alert("Failed to vote. Please try again.");
+      toast.error("Failed to vote. Please try again.");
     }
   });
 
@@ -77,7 +78,7 @@ export default function ThreadDetail() {
 
   const handleVote = async (targetType: "thread" | "reply", targetId: number, voteType: "up" | "down") => {
     if (!isAuthenticated) {
-      alert("Please sign in to vote");
+      toast.error("Please sign in to vote");
       return;
     }
 

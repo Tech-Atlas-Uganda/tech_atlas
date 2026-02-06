@@ -81,8 +81,8 @@ export default function SubmitEvent() {
     setImagePreview(null);
   };
 
-  // Generate default image as data URL
-  const generateDefaultImage = (type: "event" | "opportunity"): string => {
+  // Generate default image and upload to Supabase Storage
+  const generateAndUploadDefaultImage = async (type: "event" | "opportunity"): Promise<string> => {
     const canvas = document.createElement('canvas');
     canvas.width = 400;
     canvas.height = 300;
@@ -122,35 +122,122 @@ export default function SubmitEvent() {
     ctx.font = '48px Arial, sans-serif';
     ctx.fillText(type === 'event' ? '📅' : '🏆', 200, 200);
 
+    // Convert canvas to blob
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          reject(new Error('Failed to generate image'));
+          return;
+        }
+
+        try {
+          // Upload to Supabase Storage
+          const fileName = `default-${type}-${Date.now()}.png`;
+          const bucketName = type === 'event' ? 'event-images' : 'opportunity-images';
+          const filePath = `defaults/${fileName}`;
+
+          console.log(`📤 Uploading default ${type} image to ${bucketName}/${filePath}`);
+
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, blob, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (uploadError) {
+            console.error('❌ Failed to upload default image:', uploadError);
+            reject(uploadError);
+            return;
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(filePath);
+
+          console.log('✅ Default image uploaded:', publicUrl);
+          resolve(publicUrl);
+        } catch (error) {
+          console.error('❌ Error uploading default image:', error);
+          reject(error);
+        }
+      }, 'image/png');
+    });
+  };
+
+  // Generate preview of default image (for display only)
+  const generateDefaultImagePreview = (type: "event" | "opportunity"): string => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d')!;
+
+    const gradient = ctx.createLinearGradient(0, 0, 400, 300);
+    if (type === 'event') {
+      gradient.addColorStop(0, '#FCD34D');
+      gradient.addColorStop(1, '#F59E0B');
+    } else {
+      gradient.addColorStop(0, '#34D399');
+      gradient.addColorStop(1, '#059669');
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 400, 300);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    for (let i = 0; i < 20; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * 400, Math.random() * 300, Math.random() * 30, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TECH ATLAS', 200, 120);
+    
+    ctx.font = '18px Arial, sans-serif';
+    ctx.fillText(type.toUpperCase(), 200, 150);
+    
+    ctx.font = '48px Arial, sans-serif';
+    ctx.fillText(type === 'event' ? '📅' : '🏆', 200, 200);
+
     return canvas.toDataURL('image/png');
   };
 
   const createEvent = trpc.events.create.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      console.log('✅ Event created successfully:', data);
       toast.success("Event submitted successfully! It's now live on the platform.");
       // Invalidate queries to refresh the events list
       await utils.events.list.invalidate();
+      console.log('🔄 Cache invalidated, navigating to events page...');
       // Small delay to ensure cache is updated
       setTimeout(() => {
         setLocation("/events");
       }, 500);
     },
     onError: (error) => {
+      console.error('❌ Event creation failed:', error);
       toast.error(`Failed to submit event: ${error.message}`);
     },
   });
 
   const createOpportunity = trpc.opportunities.create.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      console.log('✅ Opportunity created successfully:', data);
       toast.success("Opportunity submitted successfully! It's now live on the platform.");
       // Invalidate queries to refresh the opportunities list
       await utils.opportunities.list.invalidate();
+      console.log('🔄 Cache invalidated, navigating to events page...');
       // Small delay to ensure cache is updated
       setTimeout(() => {
         setLocation("/events");
       }, 500);
     },
     onError: (error) => {
+      console.error('❌ Opportunity creation failed:', error);
       toast.error(`Failed to submit opportunity: ${error.message}`);
     },
   });
@@ -163,6 +250,8 @@ export default function SubmitEvent() {
       return;
     }
 
+    console.log('🚀 Starting submission for:', submissionType, formData.title);
+
     // Upload image to Supabase Storage if provided
     let imageUrl = "";
     if (imageFile) {
@@ -173,37 +262,56 @@ export default function SubmitEvent() {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${submissionType}s/${fileName}`;
+        
+        // Use separate buckets for events and opportunities
+        const bucketName = submissionType === 'event' ? 'event-images' : 'opportunity-images';
 
-        // Upload to Supabase Storage
+        console.log('📤 Uploading image to:', bucketName, filePath);
+
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('event-images')
+          .from(bucketName)
           .upload(filePath, imageFile, {
             cacheControl: '3600',
             upsert: false
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          console.error('❌ Upload error:', uploadError);
           toast.error(`Failed to upload image: ${uploadError.message}`);
-          return;
+          // Use default image instead
+          console.log('ℹ️ Generating and uploading default image...');
+          imageUrl = await generateAndUploadDefaultImage(submissionType);
+        } else {
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(filePath);
+
+          imageUrl = publicUrl;
+          console.log('✅ Image uploaded successfully:', imageUrl);
+          toast.success("Image uploaded successfully!");
         }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('event-images')
-          .getPublicUrl(filePath);
-
-        imageUrl = publicUrl;
-        console.log('Image uploaded successfully:', imageUrl);
-        toast.success("Image uploaded successfully!");
       } catch (error: any) {
-        console.error('Image upload error:', error);
+        console.error('❌ Image upload error:', error);
         toast.error(`Failed to upload image: ${error.message}`);
-        return;
+        // Use default image on error
+        console.log('ℹ️ Generating and uploading default image...');
+        try {
+          imageUrl = await generateAndUploadDefaultImage(submissionType);
+        } catch (defaultError) {
+          console.error('❌ Failed to generate default image:', defaultError);
+          imageUrl = ""; // Empty string as final fallback
+        }
       }
     } else {
-      // Generate default image if no image uploaded
-      imageUrl = generateDefaultImage(submissionType);
+      // Generate and upload default Tech Atlas branded image
+      console.log('ℹ️ No image provided, generating and uploading default image...');
+      try {
+        imageUrl = await generateAndUploadDefaultImage(submissionType);
+      } catch (defaultError) {
+        console.error('❌ Failed to generate default image:', defaultError);
+        imageUrl = ""; // Empty string as final fallback
+      }
     }
 
     const baseData = {
@@ -216,12 +324,15 @@ export default function SubmitEvent() {
       imageUrl: imageUrl || undefined,
     };
 
+    console.log('📦 Submitting data:', { ...baseData, imageUrl: imageUrl ? `${imageUrl.substring(0, 50)}...` : 'none' });
+
     if (submissionType === "event") {
       if (!formData.startDate) {
         toast.error("Start date is required for events");
         return;
       }
 
+      console.log('📅 Creating event...');
       createEvent.mutate({
         ...baseData,
         startDate: new Date(formData.startDate),
@@ -234,6 +345,7 @@ export default function SubmitEvent() {
         capacity: formData.capacity ? Number(formData.capacity) : undefined,
       });
     } else {
+      console.log('🎯 Creating opportunity...');
       createOpportunity.mutate({
         ...baseData,
         provider: formData.provider || undefined,
@@ -369,7 +481,7 @@ export default function SubmitEvent() {
                     <div className="mt-4">
                       <p className="text-sm text-gray-600 mb-2">Default image preview:</p>
                       <img 
-                        src={generateDefaultImage(submissionType)} 
+                        src={generateDefaultImagePreview(submissionType)} 
                         alt="Default preview" 
                         className="w-full max-w-md h-48 object-cover rounded-lg border opacity-75"
                       />

@@ -164,6 +164,32 @@ export async function updateUserProfile(userId: number, data: Partial<InsertUser
   await db.update(users).set(data).where(eq(users.id, userId));
 }
 
+export async function getPublicUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      bio: users.bio,
+      skills: users.skills,
+      location: users.location,
+      website: users.website,
+      github: users.github,
+      twitter: users.twitter,
+      linkedin: users.linkedin,
+      avatar: users.avatar,
+      role: users.role,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.isPublic, true))
+    .orderBy(desc(users.createdAt));
+  
+  return result;
+}
+
 // ===== HUB OPERATIONS =====
 
 export async function createHub(data: InsertHub) {

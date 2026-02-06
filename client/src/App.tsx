@@ -27,6 +27,9 @@ import SubmitEvent from "./pages/SubmitEvent";
 import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
 import ProfileSettings from "./pages/ProfileSettings";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import People from "./pages/People";
 import Team from "./pages/Team";
 import Profiles from "./pages/Profiles";
 import Contribute from "./pages/Contribute";
@@ -126,6 +129,18 @@ function Router() {
           </Route>
           <Route path="/profile/settings">
             <ProfileSettings />
+            <Footer />
+          </Route>
+          <Route path="/profile">
+            <Profile />
+            <Footer />
+          </Route>
+          <Route path="/settings">
+            <Settings />
+            <Footer />
+          </Route>
+          <Route path="/people">
+            <People />
             <Footer />
           </Route>
           <Route path="/team">

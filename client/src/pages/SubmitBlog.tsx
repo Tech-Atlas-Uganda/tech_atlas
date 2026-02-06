@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { 
@@ -61,12 +62,12 @@ export default function SubmitBlog() {
   // TRPC mutation for creating blog posts
   const createBlogPost = trpc.blog.create.useMutation({
     onSuccess: () => {
-      alert("Blog post submitted successfully! It will be reviewed before publication.");
+      toast.success("Blog post submitted successfully! It will be reviewed before publication.");
       setLocation("/blog");
     },
     onError: (error) => {
       console.error("Failed to submit blog post:", error);
-      alert("Failed to submit blog post. Please try again.");
+      toast.error("Failed to submit blog post. Please try again.");
     }
   });
 

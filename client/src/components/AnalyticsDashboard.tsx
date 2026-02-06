@@ -33,10 +33,10 @@ export function AnalyticsDashboard() {
         to: emailTest, 
         type: 'welcome' 
       });
-      alert('Test email sent successfully!');
+      toast.success('Test email sent successfully!');
       setEmailTest('');
     } catch (error) {
-      alert('Failed to send test email');
+      toast.error('Failed to send test email');
     }
   };
 

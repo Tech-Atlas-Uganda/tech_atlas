@@ -37,7 +37,7 @@ export function AuthForm() {
         full_name: name,
         display_name: name 
       });
-      alert('Check your email for the confirmation link!');
+      toast.success('Check your email for the confirmation link!');
     } catch (error) {
       console.error('Sign up error:', error);
     } finally {
