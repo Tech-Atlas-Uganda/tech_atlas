@@ -4,11 +4,11 @@
 
 ### *Mapping and Connecting Uganda's Technology Ecosystem*
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-aifestug.com-blue?style=for-the-badge)](https://aifestug.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-techatlasug.com-blue?style=for-the-badge)](https://techatlasug.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Made in Uganda](https://img.shields.io/badge/Made_in-Uganda_🇺🇬-red?style=for-the-badge)](https://uganda.com)
+[![Made in Uganda](https://img.shields.io/badge/Made_in-Uganda_🇺🇬-red?style=for-the-badge)](https://techatlasug.com)
 
-**[Live Prototype](https://aifestug.com)** • **[Documentation](#documentation)** • **[Contributing](#contributing)** • **[Contact](#contact)**
+**[Live Prototype](https://techatlasug.com)** • **[Documentation](#documentation)** • **[Contributing](#contributing)** • **[Contact](#contact)**
 
 ---
 
@@ -270,7 +270,7 @@ Tech Atlas operates under **transparent community governance** principles. Major
 
 ### Moderators
 
-Community moderators help maintain content quality and adherence to community guidelines. Current moderators are listed on the [Team page](https://aifestug.com/team).
+Community moderators help maintain content quality and adherence to community guidelines. Current moderators are listed on the [Team page](https://techatlasug.com/team).
 
 ---
 
@@ -286,7 +286,7 @@ This project is open source and available under the **MIT License**. See the [LI
 
 ### Get in Touch
 
-**🌐 Live Prototype:** [aifestug.com](https://aifestug.com)
+**🌐 Live Prototype:** [techatlasug.com](https://techatlasug.com)
 
 **📧 Email:** [ronlinx6@gmail.com](mailto:ronlinx6@gmail.com)
 
