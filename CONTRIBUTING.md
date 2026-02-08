@@ -1,177 +1,306 @@
-# Contributing to Tech Atlas
+# 🤝 Contributing to Tech Atlas Uganda
 
-Thank you for your interest in contributing to Tech Atlas. This document provides comprehensive guidelines for contributing to the platform, whether through code, content, design, or community engagement. Tech Atlas is a community-owned project, and contributions from individuals at all skill levels are welcome and valued.
+<div align="center">
 
-## Table of Contents
+**Thank you for your interest in contributing to Tech Atlas!**
 
-1. [Code of Conduct](#code-of-conduct)
-2. [Ways to Contribute](#ways-to-contribute)
-3. [Getting Started](#getting-started)
-4. [Development Workflow](#development-workflow)
-5. [Code Guidelines](#code-guidelines)
-6. [Content Guidelines](#content-guidelines)
-7. [Pull Request Process](#pull-request-process)
-8. [Community Guidelines](#community-guidelines)
+We're building Uganda's tech ecosystem infrastructure together, and we welcome contributions from developers, designers, content creators, and community members of all skill levels.
 
-## Code of Conduct
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-aifestug.com-blue?style=flat-square)](https://aifestug.com)
+[![Email](https://img.shields.io/badge/📧_Contact-ronlinx6@gmail.com-green?style=flat-square)](mailto:ronlinx6@gmail.com)
 
-Tech Atlas is committed to providing a welcoming and inclusive environment for all contributors. All participants are expected to adhere to the [Code of Conduct](./client/src/pages/CodeOfConduct.tsx). Harassment, discrimination, or disrespectful behavior will not be tolerated. Contributors who violate the Code of Conduct may be temporarily or permanently banned from the project.
+</div>
 
-## Ways to Contribute
+---
 
-Contributions to Tech Atlas take many forms beyond writing code. The platform benefits from diverse skills and perspectives.
+## 📋 Table of Contents
 
-### Code Contributions
+- [Code of Conduct](#-code-of-conduct)
+- [Ways to Contribute](#-ways-to-contribute)
+- [Getting Started](#-getting-started)
+- [Development Workflow](#-development-workflow)
+- [Code Guidelines](#-code-guidelines)
+- [Pull Request Process](#-pull-request-process)
+- [Community Guidelines](#-community-guidelines)
+- [Recognition](#-recognition)
 
-Developers can contribute by implementing new features, fixing bugs, improving performance, or enhancing the user interface. The codebase uses TypeScript, React, and tRPC, with opportunities for both frontend and backend development.
+---
 
-### Content Contributions
+## 📜 Code of Conduct
 
-Content creators can submit ecosystem data including tech hubs, communities, startups, job listings, events, learning resources, and blog posts. All submissions go through a moderation process to ensure quality and accuracy.
+Tech Atlas is committed to providing a **welcoming and inclusive environment** for all contributors. 
 
-### Design Contributions
+### Our Standards
 
-Designers can contribute UI/UX improvements, create visual assets, design marketing materials, or propose interface enhancements that improve usability and accessibility.
+✅ **We encourage:**
+- Respectful and constructive communication
+- Collaborative problem-solving
+- Helping newcomers get started
+- Celebrating community achievements
+- Giving credit where it's due
 
-### Documentation Contributions
+❌ **We don't tolerate:**
+- Harassment or discrimination of any kind
+- Disrespectful or unprofessional behavior
+- Spam or self-promotion
+- Violation of privacy or confidentiality
 
-Technical writers can improve documentation, create tutorials, write guides for new users, or translate content to make the platform more accessible.
+**Violations may result in temporary or permanent ban from the project.**
 
-### Community Moderation
+---
 
-Experienced community members can apply to become moderators, helping review submissions, moderate forum discussions, and maintain content quality.
+## 🎯 Ways to Contribute
 
-## Getting Started
+There are many ways to contribute to Tech Atlas beyond writing code!
 
-### Prerequisites
+### 💻 Code Contributions
 
-Before contributing code, ensure your development environment meets these requirements:
+<table>
+<tr>
+<td width="50%">
 
-- **Node.js** 22.x or higher
-- **pnpm** package manager (install via `npm install -g pnpm`)
-- **Git** for version control
-- **MySQL or TiDB** database instance for local development
-- **Code editor** with TypeScript support (VS Code recommended)
+**Frontend Development**
+- React components
+- UI/UX improvements
+- Responsive design
+- Accessibility features
+- Performance optimization
 
-### Fork and Clone
+</td>
+<td width="50%">
 
-Create a personal fork of the Tech Atlas repository:
+**Backend Development**
+- API endpoints (tRPC)
+- Database queries
+- Authentication & authorization
+- Data validation
+- Server optimization
 
-1. Navigate to [https://github.com/yourusername/tech-atlas](https://github.com/yourusername/tech-atlas)
-2. Click the "Fork" button in the top-right corner
-3. Clone your fork locally:
+</td>
+</tr>
+</table>
+
+### 📝 Content Contributions
+
+- **Ecosystem Data** - Add hubs, communities, startups
+- **Job Listings** - Post opportunities
+- **Events** - Share tech events and meetups
+- **Blog Posts** - Write articles and guides
+- **Learning Resources** - Curate educational content
+
+### 🎨 Design Contributions
+
+- UI/UX improvements
+- Visual assets and graphics
+- Marketing materials
+- Brand identity
+- Accessibility enhancements
+
+### 📚 Documentation
+
+- Technical documentation
+- User guides and tutorials
+- API documentation
+- Translation to local languages
+- Video tutorials
+
+### 🛡️ Community Moderation
+
+- Review submissions
+- Moderate forum discussions
+- Maintain content quality
+- Help community members
+- Enforce community guidelines
+
+---
+
+## 🚀 Getting Started
+
+### Step 1: Prerequisites
+
+Ensure you have these installed:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/tech-atlas.git
-cd tech-atlas
+✅ Node.js 22.x or higher
+✅ pnpm package manager
+✅ Git
+✅ PostgreSQL or Supabase account
+✅ Code editor (VS Code recommended)
 ```
 
-### Install Dependencies
+### Step 2: Fork & Clone
 
-Install all project dependencies using pnpm:
+1. **Fork the repository** on GitHub
+2. **Clone your fork:**
+
+```bash
+git clone https://github.com/YOUR_USERNAME/tech-atlas-uganda.git
+cd tech-atlas-uganda
+```
+
+3. **Add upstream remote:**
+
+```bash
+git remote add upstream https://github.com/original/tech-atlas-uganda.git
+```
+
+### Step 3: Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### Set Up Database
+### Step 4: Set Up Environment
 
-Create a local MySQL database and configure the connection string in your environment variables. Then push the schema:
+Create a `.env` file:
 
-```bash
-pnpm db:push
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Google Maps
+VITE_GOOGLE_MAPS_API_KEY=your-api-key
+
+# JWT
+JWT_SECRET=your-secret-key
 ```
 
-### Start Development Server
+### Step 5: Set Up Database
 
-Launch the development server with hot module replacement:
+```bash
+# Push database schema
+pnpm db:push
+
+# Or run migrations
+pnpm db:migrate
+```
+
+### Step 6: Start Development Server
 
 ```bash
 pnpm dev
 ```
 
-The application will be available at `http://localhost:3000`.
+🎉 **You're ready!** Visit `http://localhost:3000`
 
-## Development Workflow
+---
 
-### Creating a Feature Branch
+## 🔄 Development Workflow
 
-Always create a new branch for your work. Use descriptive branch names that reflect the feature or fix:
+### 1️⃣ Create a Feature Branch
+
+Use descriptive branch names:
 
 ```bash
+# Features
 git checkout -b feature/add-startup-filtering
+git checkout -b feature/user-profile-page
+
+# Bug fixes
 git checkout -b fix/forum-reply-bug
+git checkout -b fix/map-marker-display
+
+# Documentation
 git checkout -b docs/update-readme
+git checkout -b docs/api-documentation
 ```
 
-### Making Changes
+### 2️⃣ Make Your Changes
 
-Make your changes following the code guidelines outlined below. Commit frequently with clear, descriptive commit messages:
+- Write clean, readable code
+- Follow the code guidelines below
+- Add comments for complex logic
+- Update documentation if needed
+
+### 3️⃣ Write Tests
+
+```bash
+# Create test file
+server/feature.test.ts
+
+# Run tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+```
+
+### 4️⃣ Commit Your Changes
+
+Write clear, descriptive commit messages:
 
 ```bash
 git add .
-git commit -m "Add filtering by focus area to startup directory"
+git commit -m "feat: add filtering by focus area to startup directory"
+git commit -m "fix: resolve forum reply notification bug"
+git commit -m "docs: update API documentation for user endpoints"
 ```
 
-### Writing Tests
+**Commit Message Format:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting)
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `chore:` - Maintenance tasks
 
-All new features and bug fixes should include tests. Tech Atlas uses Vitest for testing. Create test files alongside the code they test:
-
-```bash
-# Example test file
-server/forum.test.ts
-```
-
-Run tests to ensure your changes do not break existing functionality:
-
-```bash
-pnpm test
-```
-
-### Keeping Your Fork Updated
-
-Regularly sync your fork with the upstream repository to avoid merge conflicts:
+### 5️⃣ Keep Your Fork Updated
 
 ```bash
-git remote add upstream https://github.com/yourusername/tech-atlas.git
+# Fetch upstream changes
 git fetch upstream
+
+# Merge into your branch
 git checkout main
 git merge upstream/main
+
+# Push to your fork
+git push origin main
 ```
 
-## Code Guidelines
+---
+
+## 📏 Code Guidelines
 
 ### TypeScript Standards
 
-Tech Atlas uses TypeScript for type safety. All code must pass TypeScript compilation without errors:
+✅ **Do:**
+```typescript
+// Define explicit types
+interface UserProfile {
+  name: string;
+  email: string;
+  role: 'user' | 'admin' | 'moderator';
+}
 
-```bash
-pnpm check
+function getUser(id: number): Promise<UserProfile> {
+  return db.getUserById(id);
+}
 ```
 
-Follow these TypeScript best practices:
-
-- Define explicit types for function parameters and return values
-- Use interfaces for object shapes
-- Avoid `any` type; use `unknown` when type is uncertain
-- Leverage type inference where appropriate
+❌ **Don't:**
+```typescript
+// Avoid 'any' type
+function getUser(id: any): any {
+  return db.getUserById(id);
+}
+```
 
 ### React Component Guidelines
 
-React components should be functional components using hooks. Follow these conventions:
-
-- Use named exports for components
-- Extract complex logic into custom hooks
-- Keep components focused on a single responsibility
-- Use TypeScript interfaces for props
-
-Example component structure:
-
+✅ **Good Component:**
 ```typescript
 interface ProfileCardProps {
   name: string;
   role: string;
-  bio: string;
+  bio?: string;
 }
 
 export function ProfileCard({ name, role, bio }: ProfileCardProps) {
@@ -181,195 +310,250 @@ export function ProfileCard({ name, role, bio }: ProfileCardProps) {
         <CardTitle>{name}</CardTitle>
         <CardDescription>{role}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <p>{bio}</p>
-      </CardContent>
+      {bio && (
+        <CardContent>
+          <p>{bio}</p>
+        </CardContent>
+      )}
     </Card>
   );
 }
 ```
 
-### Styling Guidelines
+**Component Best Practices:**
+- Use functional components with hooks
+- Use named exports
+- Define prop types with TypeScript interfaces
+- Keep components focused and small
+- Extract complex logic into custom hooks
 
-Tech Atlas uses Tailwind CSS for styling. Follow these conventions:
+### Styling with Tailwind CSS
 
-- Use Tailwind utility classes instead of custom CSS when possible
-- Extract repeated patterns into reusable components
-- Use design tokens defined in `index.css` for colors and spacing
-- Ensure responsive design with mobile-first approach
+✅ **Do:**
+```tsx
+<div className="flex items-center gap-4 p-6 rounded-lg bg-card hover:shadow-lg transition-shadow">
+  <Avatar />
+  <div className="flex-1">
+    <h3 className="text-lg font-semibold">{name}</h3>
+    <p className="text-sm text-muted-foreground">{role}</p>
+  </div>
+</div>
+```
 
-### Backend Development
+**Styling Best Practices:**
+- Use Tailwind utility classes
+- Follow mobile-first approach
+- Use design tokens from `index.css`
+- Ensure accessibility (ARIA labels, keyboard navigation)
+- Test on multiple screen sizes
 
-Backend code uses tRPC for type-safe API procedures. Follow these patterns:
+### Backend Development (tRPC)
 
-- Define procedures in `server/routers.ts`
-- Create database helpers in `server/db.ts`
-- Use `publicProcedure` for unauthenticated endpoints
-- Use `protectedProcedure` for authenticated endpoints
-- Use `adminProcedure` for admin-only endpoints
-
-Example procedure:
-
+✅ **Good Procedure:**
 ```typescript
 getHubs: publicProcedure
-  .input(z.object({ 
-    location: z.string().optional() 
+  .input(z.object({
+    location: z.string().optional(),
+    verified: z.boolean().optional(),
+    limit: z.number().min(1).max(100).default(20),
   }))
   .query(async ({ input }) => {
-    return await db.getHubsByLocation(input.location);
+    return await db.getHubs({
+      location: input.location,
+      verified: input.verified,
+      limit: input.limit,
+    });
   }),
 ```
 
+**Backend Best Practices:**
+- Use Zod for input validation
+- Use appropriate procedure types:
+  - `publicProcedure` - No authentication required
+  - `protectedProcedure` - Requires authentication
+  - `adminProcedure` - Requires admin role
+- Handle errors gracefully
+- Add logging for debugging
+- Optimize database queries
+
 ### Database Schema
 
-Database schema is defined in `drizzle/schema.ts`. When adding new tables or columns:
+When modifying the database:
 
-1. Update the schema file
-2. Run `pnpm db:push` to generate and apply migrations
-3. Update corresponding TypeScript types
-4. Create database helper functions in `server/db.ts`
+1. **Update schema file:** `drizzle/schema-postgres.ts`
+2. **Generate migration:** `pnpm db:push`
+3. **Update TypeScript types**
+4. **Create helper functions:** `server/db.ts`
+5. **Write tests**
 
-## Content Guidelines
+---
 
-### Submitting Ecosystem Data
-
-When submitting hubs, communities, startups, or other ecosystem entities:
-
-- Provide accurate, verifiable information
-- Include contact details and website links
-- Write clear, professional descriptions
-- Specify location information for mapping
-- Indicate focus areas and specializations
-
-### Job and Opportunity Listings
-
-Job postings should include:
-
-- Clear job title and description
-- Required skills and qualifications
-- Employment type (full-time, part-time, contract, internship)
-- Location (on-site, remote, hybrid)
-- Application instructions and deadline
-- Company or organization details
-
-### Blog Posts and Articles
-
-Blog contributions should:
-
-- Provide value to the tech community
-- Include proper attribution for external sources
-- Use Markdown formatting for readability
-- Add relevant tags and categories
-- Maintain a professional, respectful tone
-
-## Pull Request Process
+## 🔀 Pull Request Process
 
 ### Before Submitting
 
-Ensure your pull request meets these criteria:
+**Checklist:**
+- [ ] All tests pass (`pnpm test`)
+- [ ] TypeScript compiles (`pnpm build`)
+- [ ] Code follows style guidelines
+- [ ] Documentation updated (if needed)
+- [ ] Commit messages are clear
+- [ ] Branch is up to date with main
 
-1. All tests pass (`pnpm test`)
-2. TypeScript compiles without errors (`pnpm check`)
-3. Code follows style guidelines
-4. Commit messages are clear and descriptive
-5. Branch is up to date with main
+### Submitting Your PR
 
-### Submitting a Pull Request
-
-1. Push your branch to your fork:
-
+1. **Push your branch:**
 ```bash
 git push origin feature/your-feature-name
 ```
 
-2. Navigate to the original Tech Atlas repository
-3. Click "New Pull Request"
-4. Select your fork and branch
-5. Fill out the pull request template with:
-   - Description of changes
-   - Related issue numbers (if applicable)
-   - Testing performed
-   - Screenshots (for UI changes)
+2. **Create Pull Request on GitHub**
 
-### Pull Request Review
+3. **Fill out the PR template:**
+   - **Title:** Clear, descriptive title
+   - **Description:** What changes were made and why
+   - **Related Issues:** Link to related issues
+   - **Testing:** How you tested the changes
+   - **Screenshots:** For UI changes
 
-Core maintainers will review your pull request. The review process may include:
+### PR Review Process
 
-- Code quality assessment
-- Functionality testing
-- Design review (for UI changes)
-- Documentation verification
-- Security considerations
+Your PR will be reviewed by maintainers:
 
-Be prepared to make revisions based on feedback. Engage constructively with reviewers and address all comments before the pull request can be merged.
+1. **Code Review** - Code quality and standards
+2. **Functionality Test** - Does it work as expected?
+3. **Design Review** - UI/UX considerations
+4. **Security Check** - Any security concerns?
+5. **Documentation** - Is documentation updated?
+
+**Be prepared to:**
+- Answer questions about your changes
+- Make revisions based on feedback
+- Discuss alternative approaches
+- Rebase if conflicts arise
 
 ### After Merge
 
-Once your pull request is merged:
+🎉 **Congratulations!** Your contribution is now part of Tech Atlas!
 
-1. Delete your feature branch
-2. Sync your fork with upstream
-3. Celebrate your contribution to Tech Atlas!
-
-## Community Guidelines
-
-### Communication Channels
-
-- **GitHub Issues**: Bug reports, feature requests, technical discussions
-- **GitHub Discussions**: General questions, ideas, community conversations
-- **Forum**: Community discussions, help requests, showcasing projects
-- **Email**: hello@techatlas.ug for private inquiries
-
-### Reporting Issues
-
-When reporting bugs or issues:
-
-1. Search existing issues to avoid duplicates
-2. Use the issue template
-3. Provide clear reproduction steps
-4. Include relevant error messages and screenshots
-5. Specify your environment (browser, OS, Node version)
-
-### Suggesting Features
-
-Feature requests should:
-
-1. Clearly describe the problem being solved
-2. Explain the proposed solution
-3. Consider alternative approaches
-4. Discuss potential impact on existing features
-5. Be open to feedback and iteration
-
-### Respectful Collaboration
-
-Tech Atlas thrives on respectful, constructive collaboration. Contributors should:
-
-- Assume good intent in all interactions
-- Provide constructive feedback
-- Accept criticism gracefully
-- Credit others for their work
-- Help newcomers get started
-- Celebrate community achievements
-
-## Recognition
-
-All contributors are recognized in the project. Significant contributions may lead to:
-
-- Listing on the Team page
-- Invitation to become a moderator
-- Participation in governance discussions
-- Speaking opportunities at community events
-
-## Questions?
-
-If you have questions about contributing, reach out through:
-
-- GitHub Discussions for public questions
-- Email hello@techatlas.ug for private inquiries
-- Forum for community support
-
-Thank you for contributing to Tech Atlas and helping build Uganda's tech ecosystem infrastructure!
+```bash
+# Clean up
+git checkout main
+git pull upstream main
+git branch -d feature/your-feature-name
+git push origin --delete feature/your-feature-name
+```
 
 ---
 
-**Together, we're mapping Uganda's tech future.**
+## 💬 Community Guidelines
+
+### Communication Channels
+
+| Channel | Purpose |
+|---------|---------|
+| 🐛 **GitHub Issues** | Bug reports, feature requests |
+| 💬 **GitHub Discussions** | General questions, ideas |
+| 📧 **Email** | ronlinx6@gmail.com - Private inquiries |
+| 🌐 **Live Demo** | [aifestug.com](https://aifestug.com) |
+
+### Reporting Bugs
+
+**Good Bug Report:**
+```markdown
+**Bug Description:**
+Avatar upload fails with "Bucket not found" error
+
+**Steps to Reproduce:**
+1. Go to /profile/settings
+2. Click "Upload New Photo"
+3. Select an image
+4. Click upload
+
+**Expected Behavior:**
+Image should upload successfully
+
+**Actual Behavior:**
+Error: "Bucket not found"
+
+**Environment:**
+- Browser: Chrome 120
+- OS: Windows 11
+- Node: 22.0.0
+```
+
+### Suggesting Features
+
+**Good Feature Request:**
+```markdown
+**Problem:**
+Users can't filter jobs by salary range
+
+**Proposed Solution:**
+Add salary range filter with min/max inputs
+
+**Alternatives Considered:**
+- Salary brackets (e.g., 0-1M, 1M-3M)
+- Salary tags
+
+**Benefits:**
+- Better job discovery
+- Improved user experience
+- More relevant results
+```
+
+---
+
+## 🏆 Recognition
+
+All contributors are valued and recognized!
+
+### Contributor Levels
+
+| Level | Criteria | Benefits |
+|-------|----------|----------|
+| 🌱 **Contributor** | First merged PR | Listed in contributors |
+| 🌿 **Active Contributor** | 5+ merged PRs | Recognition on Team page |
+| 🌳 **Core Contributor** | 20+ merged PRs | Moderator invitation |
+| 🏅 **Maintainer** | Consistent contributions | Governance participation |
+
+### Ways We Recognize Contributors
+
+- 📝 Listed in `CONTRIBUTORS.md`
+- 🌐 Featured on Team page
+- 🎤 Speaking opportunities at events
+- 🗳️ Participation in governance decisions
+- 🎁 Swag and merchandise (when available)
+
+---
+
+## ❓ Questions?
+
+### Need Help?
+
+- 📖 **Documentation:** [docs/README.md](docs/README.md)
+- 🚀 **Setup Guide:** [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)
+- 🐛 **Troubleshooting:** [docs/QUICK_FIX_GUIDE.md](docs/QUICK_FIX_GUIDE.md)
+- 📧 **Email:** ronlinx6@gmail.com
+
+### Want to Chat?
+
+- 💬 GitHub Discussions for public questions
+- 📧 Email for private inquiries
+- 🌐 Visit [aifestug.com](https://aifestug.com)
+
+---
+
+<div align="center">
+
+## 💖 Thank You!
+
+**Your contributions help build Uganda's tech ecosystem infrastructure**
+
+Together, we're mapping Uganda's tech future 🇺🇬
+
+[![Star on GitHub](https://img.shields.io/github/stars/yourusername/tech-atlas-uganda?style=social)](https://github.com/yourusername/tech-atlas-uganda)
+
+**[⬆ Back to Top](#-contributing-to-tech-atlas-uganda)**
+
+</div>

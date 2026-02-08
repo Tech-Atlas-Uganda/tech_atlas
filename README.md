@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Made in Uganda](https://img.shields.io/badge/Made_in-Uganda_🇺🇬-red?style=for-the-badge)](https://techatlasug.com)
 
-**[Live Prototype](https://techatlasug.com)** • **[Documentation](#documentation)** • **[Contributing](#contributing)** • **[Contact](#contact)**
+**[Live Prototype](https://aifestug.com)** • **[Documentation](docs/README.md)** • **[Contributing](CONTRIBUTING.md)** • **[Governance](GOVERNANCE.md)** • **[Contact](#contact)**
 
 ---
 

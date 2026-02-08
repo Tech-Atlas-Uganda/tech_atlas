@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +22,9 @@ import {
   Plus,
   X,
   Save,
-  Eye
+  Eye,
+  Upload,
+  Loader2
 } from "lucide-react";
 import { CORE_CATEGORIES } from "../../../shared/const";
 
@@ -42,7 +46,24 @@ interface UserProfile {
 }
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Fetch user profile from database
+  const { data: user, refetch } = trpc.user.getProfile.useQuery(undefined, {
+    enabled: !!authUser,
+  });
+  
+  const updateProfileMutation = trpc.user.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("Profile updated successfully!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update profile: ${error.message}`);
+    },
+  });
+  
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     email: "",
@@ -63,27 +84,27 @@ export default function ProfileSettings() {
   const [newInterest, setNewInterest] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     if (user) {
-      setProfile(prev => ({
-        ...prev,
-        name: user.user_metadata?.name || "",
+      setProfile({
+        name: user.name || "",
         email: user.email || "",
-        bio: user.user_metadata?.bio || "",
-        location: user.user_metadata?.location || "",
-        website: user.user_metadata?.website || "",
-        github: user.user_metadata?.github || "",
-        linkedin: user.user_metadata?.linkedin || "",
-        twitter: user.user_metadata?.twitter || "",
-        skills: user.user_metadata?.skills || [],
-        interests: user.user_metadata?.interests || [],
-        categories: user.user_metadata?.categories || [],
-        profilePicture: user.user_metadata?.profile_picture || "",
-        isPublicProfile: user.user_metadata?.is_public_profile ?? true,
-        showInDirectory: user.user_metadata?.show_in_directory ?? true,
-      }));
+        bio: user.bio || "",
+        location: user.location || "",
+        website: user.website || "",
+        github: user.github || "",
+        linkedin: user.linkedin || "",
+        twitter: user.twitter || "",
+        skills: user.skills || [],
+        interests: [],
+        categories: [],
+        profilePicture: user.avatar || "",
+        isPublicProfile: user.isPublic ?? false,
+        showInDirectory: user.isPublic ?? false,
+      });
     }
   }, [user]);
 
@@ -142,17 +163,75 @@ export default function ProfileSettings() {
     }));
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !authUser) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${authUser.id}-${Date.now()}.${fileExt}`;
+      const filePath = fileName;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile state
+      setProfile(prev => ({ ...prev, profilePicture: publicUrl }));
+      
+      toast.success("Avatar uploaded successfully!");
+    } catch (error: any) {
+      console.error("Avatar upload error:", error);
+      toast.error(`Failed to upload avatar: ${error.message}`);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const handleSave = async () => {
+    if (!authUser) return;
+    
     setIsLoading(true);
     try {
-      // TODO: Implement profile update API call
-      console.log("Saving profile:", profile);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Profile updated successfully!");
+      await updateProfileMutation.mutateAsync({
+        name: profile.name,
+        bio: profile.bio,
+        skills: profile.skills,
+        location: profile.location,
+        website: profile.website,
+        github: profile.github,
+        twitter: profile.twitter,
+        linkedin: profile.linkedin,
+        isPublic: profile.isPublicProfile,
+        avatar: profile.profilePicture,
+      });
     } catch (error) {
       console.error("Failed to update profile:", error);
-      toast.error("Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -196,30 +275,50 @@ export default function ProfileSettings() {
                   {/* Profile Picture */}
                   <div className="flex items-center gap-6">
                     <div className="relative">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
                         {profile.profilePicture ? (
                           <img 
                             src={profile.profilePicture} 
                             alt="Profile" 
-                            className="w-full h-full rounded-full object-cover"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <User className="h-8 w-8 text-white" />
                         )}
                       </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
                       >
-                        <Camera className="h-4 w-4" />
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                     <div className="space-y-2">
                       <h3 className="font-medium">Profile Picture</h3>
                       <p className="text-sm text-muted-foreground">
-                        Upload a profile picture to help others recognize you
+                        Click the camera icon to upload a profile picture (max 5MB)
                       </p>
+                      {isUploadingAvatar && (
+                        <p className="text-sm text-blue-500 flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Uploading...
+                        </p>
+                      )}
                     </div>
                   </div>
 
