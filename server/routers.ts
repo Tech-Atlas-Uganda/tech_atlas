@@ -1915,6 +1915,139 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Blog approval/rejection with email notifications
+    approveBlogPost: coreAdminProcedure
+      .input(z.object({
+        id: z.number(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Get blog post details
+          const { data: blogPost, error: fetchError } = await dbSupabase.supabase
+            .from('blog_posts')
+            .select('*, users!inner(email, name)')
+            .eq('id', input.id)
+            .single();
+
+          if (fetchError || !blogPost) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Blog post not found' });
+          }
+
+          // Update status to published
+          const { error: updateError } = await dbSupabase.supabase
+            .from('blog_posts')
+            .update({
+              status: 'published',
+              publishedAt: new Date().toISOString(),
+              approvedBy: ctx.user.id,
+              approvedAt: new Date().toISOString(),
+            })
+            .eq('id', input.id);
+
+          if (updateError) throw updateError;
+
+          // Send approval email to author
+          try {
+            const authorEmail = (blogPost as any).users?.email;
+            const authorName = (blogPost as any).users?.name || 'Author';
+            
+            if (authorEmail) {
+              await emailService.sendContentApprovalEmail(
+                authorEmail,
+                'blog post',
+                blogPost.title,
+                true,
+                input.reason
+              );
+            }
+          } catch (emailError) {
+            console.error('Failed to send approval email:', emailError);
+            // Don't fail the approval if email fails
+          }
+
+          return { success: true, message: 'Blog post approved and published' };
+        } catch (error) {
+          console.error('Failed to approve blog post:', error);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to approve blog post' });
+        }
+      }),
+
+    rejectBlogPost: coreAdminProcedure
+      .input(z.object({
+        id: z.number(),
+        reason: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Get blog post details
+          const { data: blogPost, error: fetchError } = await dbSupabase.supabase
+            .from('blog_posts')
+            .select('*, users!inner(email, name)')
+            .eq('id', input.id)
+            .single();
+
+          if (fetchError || !blogPost) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Blog post not found' });
+          }
+
+          // Update status to rejected
+          const { error: updateError } = await dbSupabase.supabase
+            .from('blog_posts')
+            .update({
+              status: 'archived',
+              approvedBy: ctx.user.id,
+              approvedAt: new Date().toISOString(),
+            })
+            .eq('id', input.id);
+
+          if (updateError) throw updateError;
+
+          // Send rejection email to author
+          try {
+            const authorEmail = (blogPost as any).users?.email;
+            const authorName = (blogPost as any).users?.name || 'Author';
+            
+            if (authorEmail) {
+              await emailService.sendContentApprovalEmail(
+                authorEmail,
+                'blog post',
+                blogPost.title,
+                false,
+                input.reason
+              );
+            }
+          } catch (emailError) {
+            console.error('Failed to send rejection email:', emailError);
+            // Don't fail the rejection if email fails
+          }
+
+          return { success: true, message: 'Blog post rejected' };
+        } catch (error) {
+          console.error('Failed to reject blog post:', error);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to reject blog post' });
+        }
+      }),
+
+    // Get blog post by ID with author details
+    getBlogPostById: coreAdminProcedure
+      .input(z.number())
+      .query(async ({ input }) => {
+        try {
+          const { data, error } = await dbSupabase.supabase
+            .from('blog_posts')
+            .select('*, users!inner(id, email, name)')
+            .eq('id', input)
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error('Failed to get blog post:', error);
+          return null;
+        }
+      }),
+
     getAllForumThreads: coreAdminProcedure.query(async () => {
       try {
         const result = await dbSupabase.supabase
