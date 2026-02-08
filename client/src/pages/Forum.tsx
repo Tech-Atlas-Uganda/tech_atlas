@@ -10,12 +10,12 @@ import { MessageSquare, ThumbsUp, Eye, Plus, Pin, Users, Search, Clock, User } f
 import { motion } from "framer-motion";
 
 const categories = [
-  { value: "general", label: "General Discussion", color: "bg-blue-500" },
-  { value: "jobs", label: "Jobs & Opportunities", color: "bg-green-500" },
-  { value: "events", label: "Events & Meetups", color: "bg-purple-500" },
-  { value: "help", label: "Help & Support", color: "bg-orange-500" },
-  { value: "showcase", label: "Showcase", color: "bg-pink-500" },
-  { value: "feedback", label: "Feedback", color: "bg-yellow-500" },
+  { value: "general", label: "General", color: "bg-blue-500", textColor: "text-blue-600", bgLight: "bg-blue-50", borderColor: "border-blue-200" },
+  { value: "jobs", label: "Jobs", color: "bg-emerald-500", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200" },
+  { value: "events", label: "Events", color: "bg-purple-500", textColor: "text-purple-600", bgLight: "bg-purple-50", borderColor: "border-purple-200" },
+  { value: "help", label: "Help", color: "bg-orange-500", textColor: "text-orange-600", bgLight: "bg-orange-50", borderColor: "border-orange-200" },
+  { value: "showcase", label: "Showcase", color: "bg-pink-500", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200" },
+  { value: "feedback", label: "Feedback", color: "bg-amber-500", textColor: "text-amber-600", bgLight: "bg-amber-50", borderColor: "border-amber-200" },
 ];
 
 export default function Forum() {
@@ -36,23 +36,70 @@ export default function Forum() {
   }) || [];
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", { 
-      month: "short", 
-      day: "numeric", 
+    // Handle both ISO strings and Date objects
+    let d: Date;
+    if (typeof date === 'string') {
+      // If the string doesn't have timezone info, treat it as UTC
+      d = date.includes('Z') || date.includes('+') || date.includes('-') && date.lastIndexOf('-') > 10
+        ? new Date(date)
+        : new Date(date + 'Z'); // Append Z to treat as UTC
+    } else {
+      d = new Date(date);
+    }
+    
+    // Ensure we're working with a valid date
+    if (isNaN(d.getTime())) return 'Invalid date';
+    
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
-    });
+      minute: "2-digit",
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }).format(d);
   };
 
   const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
-    const past = new Date(date);
-    const diffInHours = Math.floor((now.getTime() - past.getTime()) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) return "Just now";
+    // Handle both ISO strings and Date objects
+    let past: Date;
+    if (typeof date === 'string') {
+      // If the string doesn't have timezone info, treat it as UTC
+      past = date.includes('Z') || date.includes('+') || date.includes('-') && date.lastIndexOf('-') > 10
+        ? new Date(date)
+        : new Date(date + 'Z'); // Append Z to treat as UTC
+    } else {
+      past = new Date(date);
+    }
+    
+    // Ensure we're working with valid dates
+    if (isNaN(past.getTime())) return 'Invalid date';
+    
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+    
+    // Less than a minute
+    if (diffInSeconds < 60) return "Just now";
+    
+    // Less than an hour
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    // Less than a day
+    const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    
+    // Less than a week
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    // Less than a month
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+    
+    // More than a month - show full date
     return formatDate(date);
   };
 
@@ -134,68 +181,61 @@ export default function Forum() {
             <p className="text-muted-foreground">Loading discussions...</p>
           </div>
         ) : filteredThreads && filteredThreads.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             {/* Pinned Threads */}
             {filteredThreads.filter(thread => thread.isPinned).map((thread, index) => {
               const category = categories.find(c => c.value === thread.category);
               return (
                 <motion.div
                   key={`pinned-${thread.id}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.02 }}
                 >
-                  <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent hover:shadow-lg transition-all">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Pin className="h-4 w-4 text-yellow-500" />
-                            <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
-                              Pinned
+                  <Link href={`/forum/${thread.slug}`}>
+                    <Card className="h-full border-amber-300 bg-gradient-to-br from-amber-50/50 to-transparent dark:from-amber-950/20 hover:shadow-lg hover:border-amber-400 hover:scale-105 transition-all cursor-pointer">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        {/* Category Badge */}
+                        {category && (
+                          <div className={`w-full h-1 rounded-full ${category.color} mb-2`}></div>
+                        )}
+                        
+                        {/* Pin Badge */}
+                        <div className="flex items-center gap-1 mb-2">
+                          <Pin className="h-3 w-3 text-amber-600 flex-shrink-0" />
+                          {category && (
+                            <Badge variant="outline" className={`text-[9px] px-1 py-0 h-3.5 ${category.textColor} ${category.borderColor}`}>
+                              {category.label}
                             </Badge>
-                            {category && (
-                              <Badge className={`${category.color} text-white`}>
-                                {category.label}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <Link href={`/forum/${thread.slug}`}>
-                            <h3 className="text-xl font-semibold hover:text-blue-500 transition-colors cursor-pointer">
-                              {thread.title}
-                            </h3>
-                          </Link>
-                          
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              <span>{thread.authorName || "Anonymous"}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatTimeAgo(thread.createdAt)}</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                         
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{thread.replyCount}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <ThumbsUp className="h-4 w-4" />
-                            <span>{thread.upvotes}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{thread.viewCount}</span>
-                          </div>
+                        {/* Title */}
+                        <h3 className="text-xs font-semibold text-foreground line-clamp-2 hover:text-blue-600 transition-colors leading-tight mb-2 flex-1">
+                          {thread.title}
+                        </h3>
+                        
+                        {/* Author */}
+                        <div className="text-[9px] text-muted-foreground mb-2 truncate">
+                          <User className="h-2.5 w-2.5 inline mr-0.5" />
+                          {thread.authorName || "Anonymous"}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-[9px] text-muted-foreground pt-2 border-t">
+                          <div className="flex items-center gap-0.5">
+                            <MessageSquare className="h-2.5 w-2.5" />
+                            <span>{thread.replyCount || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            <ThumbsUp className="h-2.5 w-2.5" />
+                            <span>{(thread.upvotes || 0) - (thread.downvotes || 0)}</span>
+                          </div>
+                          <div className="text-[8px]">{formatTimeAgo(thread.createdAt)}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </motion.div>
               );
             })}
@@ -206,58 +246,53 @@ export default function Forum() {
               return (
                 <motion.div
                   key={thread.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.02 }}
                 >
-                  <Card className="hover:shadow-lg hover:border-blue-500/50 transition-all">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2">
-                            {category && (
-                              <Badge variant="outline" className="gap-1">
-                                <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
-                                {category.label}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <Link href={`/forum/${thread.slug}`}>
-                            <h3 className="text-lg font-semibold hover:text-blue-500 transition-colors cursor-pointer">
-                              {thread.title}
-                            </h3>
-                          </Link>
-                          
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              <span>{thread.authorName || "Anonymous"}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatTimeAgo(thread.createdAt)}</span>
-                            </div>
-                          </div>
+                  <Link href={`/forum/${thread.slug}`}>
+                    <Card className="h-full hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 hover:scale-105 transition-all cursor-pointer group">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        {/* Category Badge */}
+                        {category && (
+                          <div className={`w-full h-1 rounded-full ${category.color} mb-2`}></div>
+                        )}
+                        
+                        {/* Category Label */}
+                        <div className="mb-2">
+                          {category && (
+                            <Badge variant="outline" className={`text-[9px] px-1 py-0 h-3.5 ${category.textColor} ${category.borderColor}`}>
+                              {category.label}
+                            </Badge>
+                          )}
                         </div>
                         
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{thread.replyCount}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <ThumbsUp className="h-4 w-4" />
-                            <span>{thread.upvotes}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{thread.viewCount}</span>
-                          </div>
+                        {/* Title */}
+                        <h3 className="text-xs font-semibold text-foreground line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight mb-2 flex-1">
+                          {thread.title}
+                        </h3>
+                        
+                        {/* Author */}
+                        <div className="text-[9px] text-muted-foreground mb-2 truncate">
+                          <User className="h-2.5 w-2.5 inline mr-0.5" />
+                          {thread.authorName || "Anonymous"}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-[9px] text-muted-foreground pt-2 border-t">
+                          <div className="flex items-center gap-0.5">
+                            <MessageSquare className="h-2.5 w-2.5" />
+                            <span>{thread.replyCount || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            <ThumbsUp className="h-2.5 w-2.5" />
+                            <span>{(thread.upvotes || 0) - (thread.downvotes || 0)}</span>
+                          </div>
+                          <div className="text-[8px]">{formatTimeAgo(thread.createdAt)}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </motion.div>
               );
             })}

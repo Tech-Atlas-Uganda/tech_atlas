@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
@@ -18,7 +19,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // Don't redirect - let the ProtectedRoute component handle authentication
+  // This prevents unwanted redirects to OAuth portal
+  console.log('[Auth] Unauthorized error detected, but not redirecting');
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -42,9 +45,21 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
+      async fetch(input, init) {
+        // Get Supabase session and add auth header
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers = new Headers(init?.headers);
+        
+        if (session?.access_token) {
+          headers.set('Authorization', `Bearer ${session.access_token}`);
+          console.log('[Auth] Sending request with Supabase token');
+        } else {
+          console.warn('[Auth] No Supabase session found - request will be unauthenticated');
+        }
+        
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },

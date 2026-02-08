@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
-import { Search, Globe, MapPin, Users, User, Briefcase } from "lucide-react";
+import { Search, Globe, MapPin, Users, User, Briefcase, Share2, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { CORE_CATEGORIES } from "../../../shared/const";
+import { toast } from "sonner";
 
 // Use standardized categories from shared constants
 
@@ -50,21 +51,21 @@ export default function Profiles() {
   const people: Person[] = (users || []).map(user => ({
     id: user.id,
     name: user.name || 'Anonymous User',
-    bio: user.bio || 'Tech enthusiast from Uganda',
+    bio: user.bio || '',
     location: user.location || 'Uganda',
     role: user.role === 'admin' ? 'Platform Admin' : user.role === 'moderator' ? 'Community Moderator' : 'Community Member',
     company: '', // Not in user schema yet
     experience: '', // Not in user schema yet
-    skills: user.skills || [],
+    skills: Array.isArray(user.skills) ? user.skills : [],
     interests: [], // Derived from skills for now
-    categories: (user as any).categories || [], // Add categories from user profile (cast to any for now)
+    categories: Array.isArray((user as any).categories) ? (user as any).categories : [],
     github: user.github || undefined,
     linkedin: user.linkedin || undefined,
     twitter: user.twitter || undefined,
     website: user.website || undefined,
-    profilePicture: undefined, // Not implemented yet
-    isPublicProfile: true, // All users are public for now
-    showInDirectory: true, // All users show in directory for now
+    profilePicture: (user as any).avatar || undefined,
+    isPublicProfile: (user as any).isPublic ?? false,
+    showInDirectory: (user as any).isPublic ?? false,
   }));
 
   // Enhanced filtering function
@@ -508,6 +509,28 @@ export default function Profiles() {
                         </a>
                       )}
                     </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button
+                      onClick={() => {
+                        const profileUrl = `${window.location.origin}/profile/${selectedPerson.id}`;
+                        navigator.clipboard.writeText(profileUrl);
+                        toast.success("Profile link copied to clipboard!");
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share Profile
+                    </Button>
+                    <Link href={`/profile/${selectedPerson.id}`}>
+                      <Button className="flex-1">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Full Profile
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </>

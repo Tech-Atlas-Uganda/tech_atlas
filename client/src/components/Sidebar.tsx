@@ -88,7 +88,7 @@ export default function Sidebar() {
           <div className="p-6 border-b border-slate-800/50">
             <Link href="/">
               <a className="flex items-center gap-3 group" onClick={() => setIsMobileOpen(false)}>
-                <img src="/logo.png" alt="Tech Atlas" className="w-10 h-10 rounded-lg shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow" />
+                <img src="/favicon.png" alt="Tech Atlas" className="w-10 h-10 rounded-lg shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow" />
                 <div>
                   <h1 className="text-xl font-bold text-white font-['Space_Grotesk']">Tech Atlas</h1>
                   <p className="text-xs text-slate-400">Uganda Ecosystem</p>
@@ -221,14 +221,19 @@ export default function Sidebar() {
           <div className="p-4 border-t border-slate-800/50">
             {isAuthenticated && user ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/30">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{user.user_metadata?.name || user.email?.split('@')[0] || "User"}</p>
-                  </div>
-                </div>
+                <Link href="/profile">
+                  <a onClick={() => setIsMobileOpen(false)}>
+                    <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors cursor-pointer">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{user.user_metadata?.name || user.email?.split('@')[0] || "User"}</p>
+                        <p className="text-xs text-slate-400">View Profile</p>
+                      </div>
+                    </div>
+                  </a>
+                </Link>
                 <Link href="/profile/settings">
                   <Button
                     variant="ghost"
@@ -271,7 +276,7 @@ export default function Sidebar() {
       {/* Auth Dialog */}
       <AuthDialog
         title="Welcome to Tech Atlas"
-        logo="/logo.png"
+        logo="/favicon.png"
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
       />

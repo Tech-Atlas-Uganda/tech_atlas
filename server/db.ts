@@ -147,8 +147,13 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Error in getUserByOpenId:", error);
+    throw error;
+  }
 }
 
 export async function getUserById(id: number) {
@@ -1195,6 +1200,11 @@ export async function updateUserRole(userId: number, newRole: string, assignedBy
   });
 
   return { success: true };
+}
+
+// Alias for updateUserRole for consistency
+export async function assignRole(userId: number, newRole: string, assignedBy: number, reason?: string) {
+  return await updateUserRole(userId, newRole, assignedBy, reason);
 }
 
 export async function deactivateUser(userId: number, reason?: string) {

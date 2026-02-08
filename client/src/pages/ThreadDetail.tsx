@@ -12,12 +12,12 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 
 const categories = [
-  { value: "general", label: "General Discussion", color: "bg-blue-500" },
-  { value: "jobs", label: "Jobs & Opportunities", color: "bg-green-500" },
-  { value: "events", label: "Events & Meetups", color: "bg-purple-500" },
-  { value: "help", label: "Help & Support", color: "bg-orange-500" },
-  { value: "showcase", label: "Showcase", color: "bg-pink-500" },
-  { value: "feedback", label: "Feedback", color: "bg-yellow-500" },
+  { value: "general", label: "General", color: "bg-blue-500", textColor: "text-blue-600", bgLight: "bg-blue-50", borderColor: "border-blue-200" },
+  { value: "jobs", label: "Jobs", color: "bg-emerald-500", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200" },
+  { value: "events", label: "Events", color: "bg-purple-500", textColor: "text-purple-600", bgLight: "bg-purple-50", borderColor: "border-purple-200" },
+  { value: "help", label: "Help", color: "bg-orange-500", textColor: "text-orange-600", bgLight: "bg-orange-50", borderColor: "border-orange-200" },
+  { value: "showcase", label: "Showcase", color: "bg-pink-500", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200" },
+  { value: "feedback", label: "Feedback", color: "bg-amber-500", textColor: "text-amber-600", bgLight: "bg-amber-50", borderColor: "border-amber-200" },
 ];
 
 export default function ThreadDetail() {
@@ -94,23 +94,66 @@ export default function ThreadDetail() {
   };
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", { 
-      month: "long", 
-      day: "numeric", 
+    // Handle both ISO strings and Date objects
+    let d: Date;
+    if (typeof date === 'string') {
+      // If the string doesn't have timezone info, treat it as UTC
+      d = date.includes('Z') || date.includes('+') || date.includes('-') && date.lastIndexOf('-') > 10
+        ? new Date(date)
+        : new Date(date + 'Z'); // Append Z to treat as UTC
+    } else {
+      d = new Date(date);
+    }
+    
+    // Ensure we're working with a valid date
+    if (isNaN(d.getTime())) return 'Invalid date';
+    
+    return new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      day: "numeric",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
-    });
+      minute: "2-digit",
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }).format(d);
   };
 
   const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
-    const past = new Date(date);
-    const diffInHours = Math.floor((now.getTime() - past.getTime()) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) return "Just now";
+    // Handle both ISO strings and Date objects
+    let past: Date;
+    if (typeof date === 'string') {
+      // If the string doesn't have timezone info, treat it as UTC
+      past = date.includes('Z') || date.includes('+') || date.includes('-') && date.lastIndexOf('-') > 10
+        ? new Date(date)
+        : new Date(date + 'Z'); // Append Z to treat as UTC
+    } else {
+      past = new Date(date);
+    }
+    
+    // Ensure we're working with valid dates
+    if (isNaN(past.getTime())) return 'Invalid date';
+    
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+    
+    // Less than a minute
+    if (diffInSeconds < 60) return "Just now";
+    
+    // Less than an hour
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    // Less than a day
+    const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    
+    // Less than a week
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    // More than a week - show full date
     return formatDate(date);
   };
 
@@ -208,7 +251,8 @@ export default function ThreadDetail() {
                     size="sm"
                     onClick={() => handleVote("thread", thread.id, "up")}
                     disabled={!isAuthenticated || vote.isPending}
-                    className="p-2"
+                    className="p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                    title={!isAuthenticated ? "Sign in to vote" : "Upvote"}
                   >
                     <ThumbsUp className="h-4 w-4" />
                   </Button>
@@ -218,7 +262,8 @@ export default function ThreadDetail() {
                     size="sm"
                     onClick={() => handleVote("thread", thread.id, "down")}
                     disabled={!isAuthenticated || vote.isPending}
-                    className="p-2"
+                    className="p-2 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                    title={!isAuthenticated ? "Sign in to vote" : "Downvote"}
                   >
                     <ThumbsDown className="h-4 w-4" />
                   </Button>
@@ -280,7 +325,8 @@ export default function ThreadDetail() {
                             size="sm"
                             onClick={() => handleVote("reply", reply.id, "up")}
                             disabled={!isAuthenticated || vote.isPending}
-                            className="p-1"
+                            className="p-1 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                            title={!isAuthenticated ? "Sign in to vote" : "Upvote"}
                           >
                             <ThumbsUp className="h-3 w-3" />
                           </Button>
@@ -290,7 +336,8 @@ export default function ThreadDetail() {
                             size="sm"
                             onClick={() => handleVote("reply", reply.id, "down")}
                             disabled={!isAuthenticated || vote.isPending}
-                            className="p-1"
+                            className="p-1 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                            title={!isAuthenticated ? "Sign in to vote" : "Downvote"}
                           >
                             <ThumbsDown className="h-3 w-3" />
                           </Button>

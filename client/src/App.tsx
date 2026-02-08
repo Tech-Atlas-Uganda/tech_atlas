@@ -26,8 +26,10 @@ import SubmitGig from "./pages/SubmitGig";
 import SubmitEvent from "./pages/SubmitEvent";
 import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
+import ImageGenerator from "./pages/ImageGenerator";
 import ProfileSettings from "./pages/ProfileSettings";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import Settings from "./pages/Settings";
 import People from "./pages/People";
 import Team from "./pages/Team";
@@ -127,8 +129,16 @@ function Router() {
             <SubmitBlog />
             <Footer />
           </Route>
+          <Route path="/tools/image-generator">
+            <ImageGenerator />
+            <Footer />
+          </Route>
           <Route path="/profile/settings">
             <ProfileSettings />
+            <Footer />
+          </Route>
+          <Route path="/profile/:id">
+            <PublicProfile />
             <Footer />
           </Route>
           <Route path="/profile">

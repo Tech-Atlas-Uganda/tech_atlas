@@ -160,11 +160,26 @@ export default function Events() {
     categoryFilter !== "all" || locationFilter !== "all" || statusFilter !== "upcoming";
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", {
+    // Handle both ISO strings and Date objects
+    let d: Date;
+    if (typeof date === 'string') {
+      // If the string doesn't have timezone info, treat it as UTC
+      d = date.includes('Z') || date.includes('+') || date.includes('-') && date.lastIndexOf('-') > 10
+        ? new Date(date)
+        : new Date(date + 'Z'); // Append Z to treat as UTC
+    } else {
+      d = new Date(date);
+    }
+    
+    // Ensure we're working with a valid date
+    if (isNaN(d.getTime())) return 'Invalid date';
+    
+    return new Intl.DateTimeFormat(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
-    });
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }).format(d);
   };
 
   const formatTime = (date: Date | string) => {

@@ -54,7 +54,7 @@ export default function Profile() {
                 View your profile information
               </p>
             </div>
-            <Link href="/settings">
+            <Link href="/profile/settings">
               <Button>
                 <Save className="h-4 w-4 mr-2" />
                 Edit Profile
@@ -132,18 +132,20 @@ export default function Profile() {
                   </div>
                 )}
 
-                {user.skills && user.skills.length > 0 && (
-                  <div>
-                    <Label className="text-muted-foreground">Skills</Label>
+                <div>
+                  <Label className="text-muted-foreground">Skills</Label>
+                  {user.skills && user.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {user.skills.map((skill) => (
-                        <Badge key={skill} variant="secondary">
+                      {user.skills.map((skill, index) => (
+                        <Badge key={index} variant="secondary">
                           {skill}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-1">No skills added yet</p>
+                  )}
+                </div>
 
                 {user.location && (
                   <div>

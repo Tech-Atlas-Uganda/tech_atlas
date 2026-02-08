@@ -62,7 +62,7 @@ export default function Footer() {
           {/* About */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <img src="/logo.png" alt="Tech Atlas" className="w-8 h-8 rounded-lg" />
+              <img src="/favicon.png" alt="Tech Atlas" className="w-8 h-8 rounded-lg" />
               <h3 className="text-white font-bold text-xl font-['Space_Grotesk']">Tech Atlas</h3>
             </div>
             <p className="text-slate-400 text-sm mb-4">

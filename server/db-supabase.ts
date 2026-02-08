@@ -1,7 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!;
+
+console.log('[Supabase] Initializing server client...');
+console.log('[Supabase] URL:', supabaseUrl ? 'Set' : 'Missing');
+console.log('[Supabase] Using:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Service Role Key' : 'Anon Key');
+
+if (!supabaseUrl) {
+  throw new Error('SUPABASE_URL or VITE_SUPABASE_URL must be set');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -490,4 +498,258 @@ export async function getOpportunitiesSupabase(filters?: { status?: string; type
   
   console.log('✅ Successfully fetched', data?.length || 0, 'opportunities from Supabase');
   return data || [];
+}
+
+export async function createBlogPostSupabase(data: any) {
+  console.log('Creating blog post with Supabase client:', data);
+  
+  const cleanData = {
+    title: data.title,
+    slug: data.slug,
+    excerpt: data.excerpt || null,
+    content: data.content,
+    coverImage: data.coverImage || null,
+    category: data.category || null,
+    tags: data.tags || null,
+    authorId: data.authorId,
+    createdBy: data.createdBy,
+    status: data.status || 'pending',
+    featured: data.featured ?? false,
+    approvedBy: data.approvedBy || null,
+  };
+
+  const { data: result, error } = await supabase
+    .from('blog_posts')
+    .insert(cleanData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    throw new Error(`Failed to create blog post: ${error.message}`);
+  }
+
+  return result;
+}
+
+export async function getBlogPostsSupabase(filters?: { status?: string; category?: string }) {
+  console.log('Fetching blog posts from Supabase with filters:', filters);
+  
+  let query = supabase.from('blog_posts').select('*');
+  
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+  
+  if (filters?.category) {
+    query = query.eq('category', filters.category);
+  }
+  
+  const { data, error } = await query.order('createdAt', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching blog posts from Supabase:', error);
+    throw new Error(`Failed to fetch blog posts: ${error.message}`);
+  }
+  
+  console.log('✅ Successfully fetched', data?.length || 0, 'blog posts from Supabase');
+  return data || [];
+}
+
+// Forum functions
+export async function createForumThreadSupabase(data: any) {
+  console.log('Creating forum thread with Supabase client:', data);
+  
+  const cleanData = {
+    title: data.title,
+    slug: data.slug,
+    content: data.content,
+    category: data.category,
+    authorId: data.authorId || null,
+    authorName: data.authorName || 'Anonymous',
+    isPinned: data.isPinned ?? false,
+    isLocked: data.isLocked ?? false,
+  };
+
+  const { data: result, error } = await supabase
+    .from('forum_threads')
+    .insert(cleanData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    throw new Error(`Failed to create forum thread: ${error.message}`);
+  }
+
+  return result;
+}
+
+export async function getForumThreadsSupabase(category?: string) {
+  console.log('Fetching forum threads from Supabase with category:', category);
+  
+  let query = supabase.from('forum_threads').select('*');
+  
+  if (category) {
+    query = query.eq('category', category);
+  }
+  
+  const { data, error } = await query.order('createdAt', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching forum threads from Supabase:', error);
+    throw new Error(`Failed to fetch forum threads: ${error.message}`);
+  }
+  
+  console.log('✅ Successfully fetched', data?.length || 0, 'forum threads from Supabase');
+  return data || [];
+}
+
+export async function getForumThreadBySlugSupabase(slug: string) {
+  console.log('Fetching forum thread by slug from Supabase:', slug);
+  
+  const { data, error } = await supabase
+    .from('forum_threads')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+  
+  if (error) {
+    console.error('Error fetching forum thread from Supabase:', error);
+    return null;
+  }
+  
+  return data;
+}
+
+// Forum replies
+export async function createForumReplySupabase(data: any) {
+  console.log('Creating forum reply with Supabase client:', data);
+  
+  const cleanData = {
+    threadId: data.threadId,
+    content: data.content,
+    authorId: data.authorId || null,
+    authorName: data.authorName || 'Anonymous',
+    parentReplyId: data.parentReplyId || null,
+  };
+
+  const { data: result, error } = await supabase
+    .from('forum_replies')
+    .insert(cleanData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    throw new Error(`Failed to create forum reply: ${error.message}`);
+  }
+
+  // Update reply count on thread
+  try {
+    const { data: thread } = await supabase
+      .from('forum_threads')
+      .select('replyCount')
+      .eq('id', data.threadId)
+      .single();
+    
+    if (thread) {
+      await supabase
+        .from('forum_threads')
+        .update({ replyCount: (thread.replyCount || 0) + 1 })
+        .eq('id', data.threadId);
+    }
+  } catch (updateError) {
+    console.warn('Failed to increment reply count:', updateError);
+    // Non-critical, continue
+  }
+
+  return result;
+}
+
+export async function getForumRepliesSupabase(threadId: number) {
+  console.log('Fetching forum replies from Supabase for thread:', threadId);
+  
+  const { data, error } = await supabase
+    .from('forum_replies')
+    .select('*')
+    .eq('threadId', threadId)
+    .order('createdAt', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching forum replies from Supabase:', error);
+    throw new Error(`Failed to fetch forum replies: ${error.message}`);
+  }
+  
+  console.log('✅ Successfully fetched', data?.length || 0, 'forum replies from Supabase');
+  return data || [];
+}
+
+// Forum voting - simplified approach
+export async function voteOnForumContentSupabase(data: any) {
+  console.log('Processing vote with Supabase client:', data);
+  
+  const { targetType, targetId, voteType, userId } = data;
+  
+  // For threads, update upvotes/downvotes directly
+  if (targetType === 'thread') {
+    const column = voteType === 'up' ? 'upvotes' : 'downvotes';
+    
+    // Get current value
+    const { data: thread, error: fetchError } = await supabase
+      .from('forum_threads')
+      .select(column)
+      .eq('id', targetId)
+      .single();
+    
+    if (fetchError) {
+      throw new Error(`Failed to fetch thread: ${fetchError.message}`);
+    }
+    
+    // Increment the vote count
+    const newValue = (thread[column] || 0) + 1;
+    
+    const { error: updateError } = await supabase
+      .from('forum_threads')
+      .update({ [column]: newValue })
+      .eq('id', targetId);
+    
+    if (updateError) {
+      throw new Error(`Failed to update vote: ${updateError.message}`);
+    }
+    
+    return { success: true, [column]: newValue };
+  }
+  
+  // For replies, update upvotes/downvotes directly
+  if (targetType === 'reply') {
+    const column = voteType === 'up' ? 'upvotes' : 'downvotes';
+    
+    // Get current value
+    const { data: reply, error: fetchError } = await supabase
+      .from('forum_replies')
+      .select(column)
+      .eq('id', targetId)
+      .single();
+    
+    if (fetchError) {
+      throw new Error(`Failed to fetch reply: ${fetchError.message}`);
+    }
+    
+    // Increment the vote count
+    const newValue = (reply[column] || 0) + 1;
+    
+    const { error: updateError } = await supabase
+      .from('forum_replies')
+      .update({ [column]: newValue })
+      .eq('id', targetId);
+    
+    if (updateError) {
+      throw new Error(`Failed to update vote: ${updateError.message}`);
+    }
+    
+    return { success: true, [column]: newValue };
+  }
+  
+  throw new Error('Invalid target type');
 }

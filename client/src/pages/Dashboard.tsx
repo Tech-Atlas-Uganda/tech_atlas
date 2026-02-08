@@ -42,6 +42,8 @@ interface GitHubContributor {
   html_url: string;
 }
 
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+
 export default function Dashboard() {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [contributors, setContributors] = useState<GitHubContributor[]>([]);
@@ -59,19 +61,21 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // Fetch Uganda tech repos
+    // Fetch Tech Atlas Uganda repo stats
     const fetchGitHubData = async () => {
       try {
-        const reposResponse = await fetch(
-          'https://api.github.com/search/repositories?q=topic:uganda+topic:tech+OR+topic:uganda+topic:technology&sort=stars&per_page=6'
+        // Fetch the main Tech Atlas Uganda repo
+        const repoResponse = await fetch(
+          'https://api.github.com/repos/Tech-Atlas-Uganda/tech_atlas'
         );
-        const reposData = await reposResponse.json();
-        setRepos(reposData.items || []);
-
-        // Fetch contributors from the top repo
-        if (reposData.items && reposData.items[0]) {
+        const repoData = await repoResponse.json();
+        
+        if (repoData && !repoData.message) {
+          setRepos([repoData]);
+          
+          // Fetch contributors from the repo
           const contributorsResponse = await fetch(
-            `https://api.github.com/repos/${reposData.items[0].full_name}/contributors?per_page=8`
+            'https://api.github.com/repos/Tech-Atlas-Uganda/tech_atlas/contributors?per_page=8'
           );
           const contributorsData = await contributorsResponse.json();
           setContributors(contributorsData || []);
@@ -134,7 +138,7 @@ export default function Dashboard() {
                       <Icon className={`h-6 w-6 ${stat.color}`} />
                     </div>
                     <p className="text-3xl font-bold text-foreground mb-1">
-                      {stat.value}
+                      <AnimatedCounter value={stat.value} duration={1.5} />
                     </p>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                   </CardContent>
@@ -158,7 +162,9 @@ export default function Dashboard() {
                     <Star className="h-6 w-6 text-yellow-500" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-foreground">{totalStars.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      <AnimatedCounter value={totalStars} duration={2} />
+                    </p>
                     <p className="text-sm text-muted-foreground">Total Stars</p>
                   </div>
                 </div>
@@ -178,7 +184,9 @@ export default function Dashboard() {
                     <GitFork className="h-6 w-6 text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-foreground">{totalForks.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      <AnimatedCounter value={totalForks} duration={2} />
+                    </p>
                     <p className="text-sm text-muted-foreground">Total Forks</p>
                   </div>
                 </div>
@@ -198,7 +206,9 @@ export default function Dashboard() {
                     <Users className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-foreground">{totalContributors}</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      <AnimatedCounter value={totalContributors} duration={2} />
+                    </p>
                     <p className="text-sm text-muted-foreground">Contributors</p>
                   </div>
                 </div>

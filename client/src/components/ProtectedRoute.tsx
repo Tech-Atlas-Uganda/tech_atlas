@@ -71,7 +71,7 @@ export function ProtectedRoute({
         
         <AuthDialog
           title="Sign in to Tech Atlas"
-          logo="/logo.png"
+          logo="/favicon.png"
           open={showAuthDialog}
           onOpenChange={setShowAuthDialog}
         />

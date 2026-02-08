@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun, Menu, X, MapPin, Briefcase, BookOpen, Calendar, FileText, User, LogOut } from "lucide-react";
 import { useState } from "react";
@@ -13,12 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
+import { AuthDialog } from "@/components/AuthDialog";
 
 export default function Navigation() {
   const [location] = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const logoutMutation = trpc.auth.logout.useMutation();
 
   const handleLogout = async () => {
@@ -122,8 +123,11 @@ export default function Navigation() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button asChild className="hidden md:flex">
-                    <a href={getLoginUrl()}>Sign In</a>
+                  <Button 
+                    onClick={() => setShowAuthDialog(true)}
+                    className="hidden md:flex"
+                  >
+                    Sign In
                   </Button>
                 )}
               </>
@@ -199,8 +203,11 @@ export default function Navigation() {
                     </button>
                   </>
                 ) : (
-                  <Button asChild className="w-full">
-                    <a href={getLoginUrl()}>Sign In</a>
+                  <Button 
+                    onClick={() => setShowAuthDialog(true)}
+                    className="w-full"
+                  >
+                    Sign In
                   </Button>
                 )}
               </>
@@ -208,6 +215,14 @@ export default function Navigation() {
           </div>
         )}
       </div>
+      
+      {/* Auth Dialog */}
+      <AuthDialog
+        title="Sign in to Tech Atlas"
+        logo="/favicon.png"
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+      />
     </nav>
   );
 }

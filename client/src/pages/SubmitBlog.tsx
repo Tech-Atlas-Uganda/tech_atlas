@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,15 +110,45 @@ export default function SubmitBlog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate cover image is present
+    if (!post.coverImage) {
+      toast.error('Please upload a cover image for your blog post.');
+      return;
+    }
+
     try {
+      let coverImageUrl = "";
+      
+      // Upload cover image
+      const fileExt = post.coverImage.name.split('.').pop();
+      const fileName = `blog-${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(fileName, post.coverImage, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        console.error('Image upload error:', uploadError);
+        toast.error('Failed to upload image. Please try again or use a different image.');
+        return;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(fileName);
+      
+      coverImageUrl = publicUrl;
+
       await createBlogPost.mutateAsync({
         title: post.title,
         excerpt: post.excerpt,
         content: post.content,
         category: post.category,
         tags: post.tags,
-        // Note: File upload would need separate handling
-        // coverImage: post.coverImage
+        coverImage: coverImageUrl,
       });
       
       // Reset form on success
@@ -197,7 +228,7 @@ export default function SubmitBlog() {
 
                     {/* Cover Image */}
                     <div className="space-y-2">
-                      <Label>Cover Image</Label>
+                      <Label>Cover Image *</Label>
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
                         {post.coverImagePreview ? (
                           <div className="space-y-4">
@@ -220,26 +251,45 @@ export default function SubmitBlog() {
                           </div>
                         ) : (
                           <div className="text-center space-y-4">
-                            <Image className="h-12 w-12 mx-auto text-muted-foreground" />
-                            <div>
-                              <Label htmlFor="cover-image" className="cursor-pointer">
-                                <div className="text-sm text-muted-foreground">
-                                  Click to upload or drag and drop
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  PNG, JPG, GIF up to 5MB
-                                </div>
-                              </Label>
+                            <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
+                            <div className="space-y-2">
+                              <p className="text-sm text-muted-foreground">
+                                Click to upload or drag and drop
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                PNG, JPG, GIF up to 5MB
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById('cover-image')?.click()}
+                                className="mt-2"
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Choose Image
+                              </Button>
                               <Input
                                 id="cover-image"
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageUpload}
                                 className="hidden"
+                                required
                               />
                             </div>
                           </div>
                         )}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <span>Don't have an image?</span>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 text-blue-500 hover:text-blue-600"
+                          onClick={() => window.open('/tools/image-generator', '_blank')}
+                        >
+                          Generate one here →
+                        </Button>
                       </div>
                     </div>
 
@@ -324,7 +374,7 @@ export default function SubmitBlog() {
                       
                       <Button
                         type="submit"
-                        disabled={createBlogPost.isPending || !post.title || !post.excerpt || !post.content || !post.category}
+                        disabled={createBlogPost.isPending || !post.title || !post.excerpt || !post.content || !post.category || !post.coverImage}
                         className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                       >
                         <Send className="h-4 w-4" />

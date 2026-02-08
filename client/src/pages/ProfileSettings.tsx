@@ -50,14 +50,17 @@ export default function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Fetch user profile from database
-  const { data: user, refetch } = trpc.user.getProfile.useQuery(undefined, {
+  const { data: user, refetch, isLoading: isLoadingProfile, error: profileError } = trpc.user.getProfile.useQuery(undefined, {
     enabled: !!authUser,
+    refetchOnWindowFocus: false,
+    retry: 1, // Only retry once
+    retryDelay: 1000, // Wait 1 second before retry
   });
   
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Profile updated successfully!");
-      refetch();
+      await refetch();
     },
     onError: (error) => {
       toast.error(`Failed to update profile: ${error.message}`);
@@ -77,8 +80,8 @@ export default function ProfileSettings() {
     interests: [],
     categories: [],
     profilePicture: "",
-    isPublicProfile: true,
-    showInDirectory: true,
+    isPublicProfile: false,
+    showInDirectory: false,
   });
   const [newSkill, setNewSkill] = useState("");
   const [newInterest, setNewInterest] = useState("");
@@ -98,7 +101,7 @@ export default function ProfileSettings() {
         github: user.github || "",
         linkedin: user.linkedin || "",
         twitter: user.twitter || "",
-        skills: user.skills || [],
+        skills: Array.isArray(user.skills) ? user.skills : [],
         interests: [],
         categories: [],
         profilePicture: user.avatar || "",
@@ -186,30 +189,54 @@ export default function ProfileSettings() {
       const fileName = `${authUser.id}-${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
+      // Delete old avatar if exists
+      if (profile.profilePicture) {
+        const oldFileName = profile.profilePicture.split('/').pop();
+        if (oldFileName) {
+          await supabase.storage
+            .from('avatars')
+            .remove([oldFileName]);
+        }
+      }
+
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log('Avatar uploaded successfully:', publicUrl);
+
       // Update profile state
       setProfile(prev => ({ ...prev, profilePicture: publicUrl }));
+      
+      // Save to database immediately
+      await updateProfileMutation.mutateAsync({
+        avatar: publicUrl,
+      });
       
       toast.success("Avatar uploaded successfully!");
     } catch (error: any) {
       console.error("Avatar upload error:", error);
-      toast.error(`Failed to upload avatar: ${error.message}`);
+      toast.error(`Failed to upload avatar: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -232,10 +259,54 @@ export default function ProfileSettings() {
       });
     } catch (error) {
       console.error("Failed to update profile:", error);
+      // Error is already handled by the mutation's onError
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show error state if profile fails to load
+  if (profileError) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-red-500">Failed to Load Profile</CardTitle>
+              <CardDescription>
+                {profileError.message}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                This usually means you need to sign out and sign in again to refresh your session.
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/'}
+                className="w-full"
+              >
+                Go to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // Show loading state while fetching profile
+  if (isLoadingProfile) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Loading your profile...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
