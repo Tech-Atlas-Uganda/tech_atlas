@@ -72,7 +72,7 @@ export const emailService = {
   },
 
   // Content approval notification
-  sendContentApprovalEmail: async (to: string, contentType: string, title: string, approved: boolean) => {
+  sendContentApprovalEmail: async (to: string, contentType: string, title: string, approved: boolean, reason?: string) => {
     const status = approved ? 'approved' : 'rejected';
     const emoji = approved ? '✅' : '❌';
     
@@ -85,7 +85,7 @@ export const emailService = {
           <p>Your ${contentType} submission "${title}" has been ${status}.</p>
           ${approved 
             ? '<p>It is now live on Tech Atlas Uganda and visible to the community!</p>' 
-            : '<p>Please review our community guidelines and feel free to resubmit with any necessary changes.</p>'
+            : `<p>Reason: ${reason || 'Please review our community guidelines and feel free to resubmit with any necessary changes.'}</p>`
           }
           <p>
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" 

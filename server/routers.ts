@@ -1911,8 +1911,22 @@ export const appRouter = router({
     deleteBlogPost: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteBlogPost(input);
-        return { success: true };
+        try {
+          // Use Supabase directly to avoid Drizzle issues
+          const { error } = await dbSupabase.supabase
+            .from('blog_posts')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete blog post:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete blog post: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     // Blog approval/rejection with email notifications
@@ -2080,8 +2094,21 @@ export const appRouter = router({
     deleteForumThread: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteForumThread(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('forum_threads')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete forum thread:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllEvents: coreAdminProcedure.query(async () => {
@@ -2118,8 +2145,21 @@ export const appRouter = router({
     deleteEvent: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteEvent(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('events')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete event:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllJobs: coreAdminProcedure.query(async () => {
@@ -2154,8 +2194,21 @@ export const appRouter = router({
     deleteJob: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteJob(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('jobs')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete job:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllGigs: coreAdminProcedure.query(async () => {
@@ -2189,8 +2242,21 @@ export const appRouter = router({
     deleteGig: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteGig(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('gigs')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete gig:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllHubs: coreAdminProcedure.query(async () => {
@@ -2225,8 +2291,21 @@ export const appRouter = router({
     deleteHub: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteHub(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('hubs')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete hub:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllCommunities: coreAdminProcedure.query(async () => {
@@ -2261,8 +2340,21 @@ export const appRouter = router({
     deleteCommunity: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteCommunity(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('communities')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete community:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllStartups: coreAdminProcedure.query(async () => {
@@ -2297,8 +2389,21 @@ export const appRouter = router({
     deleteStartup: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteStartup(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('startups')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete startup:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllOpportunities: coreAdminProcedure.query(async () => {
@@ -2332,8 +2437,21 @@ export const appRouter = router({
     deleteOpportunity: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteOpportunity(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('opportunities')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete opportunity:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     getAllLearningResources: coreAdminProcedure.query(async () => {
@@ -2367,8 +2485,21 @@ export const appRouter = router({
     deleteLearningResource: coreAdminProcedure
       .input(z.number())
       .mutation(async ({ input }) => {
-        await db.deleteLearningResource(input);
-        return { success: true };
+        try {
+          const { error } = await dbSupabase.supabase
+            .from('learning_resources')
+            .delete()
+            .eq('id', input);
+          
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to delete learning resource:', error);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: `Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          });
+        }
       }),
 
     // Get all pending content across all types
