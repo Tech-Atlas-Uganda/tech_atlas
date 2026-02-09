@@ -1,6 +1,3 @@
-[providers]
-node = false
-
 [phases.setup]
 nixPkgs = ["nodejs-18_x"]
 
@@ -18,6 +15,3 @@ cmds = ["pnpm run build"]
 
 [start]
 cmd = "pnpm start"
-
-[variables]
-NODE_ENV = "production"
