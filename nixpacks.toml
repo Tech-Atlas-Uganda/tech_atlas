@@ -1,13 +1,9 @@
 [phases.setup]
-nixPkgs = ["nodejs-18_x"]
+nixPkgs = ["nodejs-18_x", "pnpm-9_x"]
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = [
-  "corepack enable",
-  "corepack prepare pnpm@10.4.1 --activate",
-  "pnpm install --frozen-lockfile --prefer-offline"
-]
+cmds = ["pnpm install --frozen-lockfile --prefer-offline"]
 
 [phases.build]
 dependsOn = ["install"]
