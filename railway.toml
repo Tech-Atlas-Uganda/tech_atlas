@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install && pnpm run build"
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
 startCommand = "pnpm start"

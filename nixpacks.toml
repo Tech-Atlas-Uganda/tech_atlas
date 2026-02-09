@@ -1,11 +1,23 @@
+[providers]
+node = false
+
 [phases.setup]
-nixPkgs = ["nodejs-18_x", "pnpm"]
+nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
-cmds = ["pnpm install --frozen-lockfile"]
+dependsOn = ["setup"]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@10.4.1 --activate",
+  "pnpm install --frozen-lockfile --prefer-offline"
+]
 
 [phases.build]
+dependsOn = ["install"]
 cmds = ["pnpm run build"]
 
 [start]
 cmd = "pnpm start"
+
+[variables]
+NODE_ENV = "production"
