@@ -3,7 +3,7 @@ nixPkgs = ["nodejs-18_x", "pnpm-9_x"]
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = ["pnpm install --frozen-lockfile --prefer-offline"]
+cmds = ["pnpm install --prefer-offline"]
 
 [phases.build]
 dependsOn = ["install"]
