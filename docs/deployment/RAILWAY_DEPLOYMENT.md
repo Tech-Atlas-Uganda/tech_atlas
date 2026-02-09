@@ -61,34 +61,7 @@ In Railway Dashboard, go to your project → Variables tab and add:
 
 ```env
 # Database (Supabase)
-DATABASE_URL=postgresql://postgres:mxO1g6xlrBX5KGlb@db.opjxkfzofuqzijkvinzd.supabase.co:5432/postgres?sslmode=require
 
-# Supabase
-SUPABASE_URL=https://opjxkfzofuqzijkvinzd.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wanhrZnpvZnVxemlqa3ZpbnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNjg5MTIsImV4cCI6MjA4NTc0NDkxMn0.MxKQQ9d4-iqu7jjY0_UiSC6qkKhRpIf9sBQVP4wbxOY
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wanhrZnpvZnVxemlqa3ZpbnpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDE2ODkxMiwiZXhwIjoyMDg1NzQ0OTEyfQ.V0KPsUQ6TEJgTx4TATilRFlh9coZhBnydrRNU6T9wAo
-
-# Frontend Variables
-VITE_SUPABASE_URL=https://opjxkfzofuqzijkvinzd.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wanhrZnpvZnVxemlqa3ZpbnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNjg5MTIsImV4cCI6MjA4NTc0NDkxMn0.MxKQQ9d4-iqu7jjY0_UiSC6qkKhRpIf9sBQVP4wbxOY
-
-# JWT
-JWT_SECRET=a7f8d9e2b4c6f1a3e5d7b9c2f4e6a8d0b3c5e7f9a1d3e5b7c9f1a3e5d7b9c2f4e6a8d0b3c5e7f9a1d3e5b7c9f1a3e5d7
-
-# Email (Resend)
-RESEND_API_KEY=re_HJANNjzG_BdKjV9JsTZg4rxAZY4awe7iu
-
-# Analytics (Umami)
-UMAMI_WEBSITE_ID=6667cb43-f103-4dfe-ade5-4c38c3126d0b
-UMAMI_API_URL=https://cloud.umami.is
-VITE_UMAMI_WEBSITE_ID=6667cb43-f103-4dfe-ade5-4c38c3126d0b
-VITE_UMAMI_SRC=https://cloud.umami.is/script.js
-
-# Google Maps (Optional)
-VITE_GOOGLE_MAPS_API_KEY=AIzaSyA3P-krmZ77REOCln9EiECMqoiCBA-MxYw
-
-# Node Environment
-NODE_ENV=production
 ```
 
 ### 5. Configure Domain (Optional)

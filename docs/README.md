@@ -1,105 +1,103 @@
-# 📚 Tech Atlas Documentation
+# Tech Atlas Documentation
 
-Welcome to the Tech Atlas documentation! This folder contains all technical guides, setup instructions, and troubleshooting documentation.
+## 📁 Documentation Structure
 
-## 📖 Table of Contents
+### `/algolia` - Algolia Integration Documentation
+All documentation related to Algolia search and AI chatbot implementation:
+- `ALGOLIA_README.md` - Complete Algolia integration overview
+- `ALGOLIA_AGENT_PROMPT.md` - Conversational agent prompt (detailed)
+- `ALGOLIA_AGENT_PROMPT_V2.md` - Filter suggestions agent prompt (JSON-only)
+- `ALGOLIA_CHAT_AGENT_PROMPT.md` - Atlas AI chatbot agent prompt
+- `ALGOLIA_CHATBOT_AGENT_PROMPT.md` - Additional chatbot documentation
+- `ALGOLIA_DEVTO_SUBMISSION.md` - Original DEV.to submission draft
+- `ALGOLIA_FINAL_SUMMARY.md` - Implementation summary
+- `ALGOLIA_SUBMISSION_CHECKLIST.md` - Submission requirements checklist
+- `ALGOLIA_VISUAL_GUIDE.md` - UI/UX visual guide
+- `DEVTO_FINAL_SUBMISSION.md` - **Final DEV.to submission article**
+- `DEVTO_SUBMISSION.md` - Alternative submission version
+- `SUBMISSION_CHECKLIST.md` - Pre-submission checklist
 
-### 🚀 Getting Started
-- [Local Setup Guide](LOCAL_SETUP.md) - Complete guide for setting up the project locally
-- [Quick Database Setup](QUICK_DATABASE_SETUP.md) - Fast database configuration
-- [Database Setup](SETUP_DATABASE.md) - Detailed database setup instructions
+### `/deployment` - Deployment Documentation
+Everything related to deploying Tech Atlas:
+- `RAILWAY_DEPLOYMENT.md` - Complete Railway deployment guide
+- `deploy-railway.sh` - Automated deployment script
+- `railway.json` - Railway configuration
+- `nixpacks.toml` - Build configuration
 
-### 🗄️ Database & Backend
-- [Supabase Setup](SUPABASE_SETUP.md) - Supabase configuration guide
-- [Manual Supabase Setup](MANUAL_SUPABASE_SETUP.md) - Step-by-step Supabase setup
-- [Supabase Buckets Quick Guide](SUPABASE_BUCKETS_QUICK_GUIDE.md) - Storage buckets setup
-- [Storage Buckets Setup](STORAGE_BUCKETS_SETUP.md) - Complete storage configuration
-- [Test Database Functionality](test-database-functionality.md) - Database testing guide
+### `/admin` - Admin & Core Features Documentation
+Documentation for admin features and core functionality:
+- `CORE_ADMIN_GOD_MODE.md` - Core admin dashboard documentation
+- `CORE_ADMIN_DASHBOARD.md` - Dashboard features
+- `START_HERE_CORE_ADMIN.md` - Getting started with core admin
+- `BUTTONS_FIXED_COMPLETE.md` - UI fixes documentation
+- `DELETE_AND_EMAIL_FIXED.md` - Feature fixes
+- `IMPLEMENTATION_SUMMARY.md` - Implementation notes
+- `PHASE_1_ENHANCED_COMPLETE.md` - Phase 1 completion summary
 
-### 👤 User Profile System
-- [Profile System Setup](PROFILE_SYSTEM_SETUP.md) - Complete profile system documentation
-- [Profile Pages Structure](PROFILE_PAGES_STRUCTURE.md) - Profile pages organization
-- [Profile Avatar Setup](PROFILE_AVATAR_SETUP_COMPLETE.md) - Avatar upload implementation
-- [Avatar Upload Troubleshooting](AVATAR_UPLOAD_TROUBLESHOOTING.md) - Fix avatar upload issues
-- [Avatar Upload Final Fix](AVATAR_UPLOAD_FINAL_FIX.md) - Latest avatar upload solution
-- [Setup Avatars Bucket](setup-avatars-bucket.md) - Supabase avatars bucket setup
+### `/guides` - User Guides & Quick References
+Quick start guides and reference documentation:
+- `START_HERE.md` - Main getting started guide
+- `QUICK_REFERENCE.md` - Quick reference for common tasks
+- `QUICK_TEST_GUIDE.md` - Testing guide
+- `PROJECT_STRUCTURE.md` - Project structure overview
 
-### 🖼️ Image & Media
-- [Image Upload Setup](IMAGE_UPLOAD_SETUP.md) - Image upload configuration
-- [Simple Map Dots Update](SIMPLE_MAP_DOTS_UPDATE.md) - Map visualization updates
+## 🚀 Quick Links
 
-### 🔐 Authentication & Roles
-- [Role Hierarchy](ROLE_HIERARCHY.md) - User roles and permissions
-- [Hierarchy Structure](HIERARCHY_STRUCTURE.md) - System hierarchy documentation
+### For New Contributors
+1. Start with `/guides/START_HERE.md`
+2. Review `/guides/PROJECT_STRUCTURE.md`
+3. Check `CONTRIBUTING.md` (root)
 
-### 🛠️ Fixes & Troubleshooting
-- [Quick Fix Guide](QUICK_FIX_GUIDE.md) - Common issues and solutions
-- [Fixes Applied](FIXES_APPLIED.md) - Recent fixes documentation
-- [Dashboard Stats Fix](DASHBOARD_STATS_FIX.md) - Dashboard statistics fixes
-- [Events Fixes Summary](EVENTS_FIXES_SUMMARY.md) - Events system fixes
-- [Fix Opportunities Not Showing](FIX_OPPORTUNITIES_NOT_SHOWING.md) - Opportunities display fix
+### For Algolia Challenge Judges
+1. Read `/algolia/DEVTO_FINAL_SUBMISSION.md` - Main submission
+2. Try the live demo: https://techatlasug.com/dashboard
+3. Review `/algolia/ALGOLIA_README.md` for technical details
 
-### 🚀 Deployment & Production
-- [Production Setup](PRODUCTION_SETUP.md) - Production deployment guide
-- [Production Ready Summary](PRODUCTION_READY_SUMMARY.md) - Production checklist
+### For Deployment
+1. Follow `/deployment/RAILWAY_DEPLOYMENT.md`
+2. Use `/deployment/deploy-railway.sh` for automation
+3. Configure with `/deployment/railway.json`
 
-### 📋 Project Management
-- [Next Steps](NEXT_STEPS.md) - Upcoming features and tasks
-- [Todo](todo.md) - Project todo list
-- [Routes Documentation](ROUTES_DOCUMENTATION.md) - Application routes reference
+### For Admin Features
+1. Start with `/admin/CORE_ADMIN_GOD_MODE.md`
+2. Follow `/admin/START_HERE_CORE_ADMIN.md`
+3. Reference `/admin/CORE_ADMIN_DASHBOARD.md`
 
-### 📧 Additional Features
-- [Setup Newsletter](setup-newsletter.md) - Newsletter system setup
+## 📚 Additional Documentation
 
----
+- `GOVERNANCE.md` (root) - Platform governance model
+- `CONTRIBUTING.md` (root) - Contribution guidelines
+- `README.md` (root) - Main project README
 
-## 🔍 Quick Links
+## 🔍 Finding Documentation
 
-### Most Used Guides
-1. **Setting up locally?** → [Local Setup Guide](LOCAL_SETUP.md)
-2. **Database issues?** → [Quick Database Setup](QUICK_DATABASE_SETUP.md)
-3. **Avatar upload not working?** → [Avatar Upload Troubleshooting](AVATAR_UPLOAD_TROUBLESHOOTING.md)
-4. **Need quick fixes?** → [Quick Fix Guide](QUICK_FIX_GUIDE.md)
-5. **Deploying to production?** → [Production Setup](PRODUCTION_SETUP.md)
+Use this guide to quickly find what you need:
 
-### By Feature
-- **Profile System** → [Profile System Setup](PROFILE_SYSTEM_SETUP.md)
-- **Image Uploads** → [Image Upload Setup](IMAGE_UPLOAD_SETUP.md)
-- **Storage** → [Storage Buckets Setup](STORAGE_BUCKETS_SETUP.md)
-- **Authentication** → [Role Hierarchy](ROLE_HIERARCHY.md)
+**I want to...**
+- Deploy the app → `/deployment/RAILWAY_DEPLOYMENT.md`
+- Understand Algolia integration → `/algolia/ALGOLIA_README.md`
+- Submit to DEV.to challenge → `/algolia/DEVTO_FINAL_SUBMISSION.md`
+- Use admin features → `/admin/CORE_ADMIN_GOD_MODE.md`
+- Get started as contributor → `/guides/START_HERE.md`
+- Test the application → `/guides/QUICK_TEST_GUIDE.md`
 
----
-
-## 📝 Documentation Guidelines
+## 📝 Documentation Standards
 
 When adding new documentation:
-
-1. **Use clear titles** - Make it easy to find
-2. **Add to this index** - Update the table of contents
-3. **Include examples** - Show, don't just tell
-4. **Keep it updated** - Remove outdated information
-5. **Use markdown** - Follow markdown best practices
-
----
+1. Place in appropriate folder
+2. Use clear, descriptive filenames
+3. Include table of contents for long docs
+4. Add cross-references to related docs
+5. Update this README with new files
 
 ## 🤝 Contributing to Docs
 
-Found an error or want to improve the documentation? 
-
+Found an error or want to improve documentation?
 1. Edit the relevant file
 2. Submit a pull request
-3. Tag it with `documentation` label
+3. Tag with `documentation` label
 
 ---
 
-## 📞 Need Help?
-
-If you can't find what you're looking for:
-
-- 📧 Email: ronlinx6@gmail.com
-- 🌐 Live Demo: [aifestug.com](https://aifestug.com)
-- 📖 Main README: [../README.md](../README.md)
-
----
-
-**Last Updated:** December 2024
+**Last Updated**: February 9, 2026  
+**Maintained by**: Tech Atlas Team
