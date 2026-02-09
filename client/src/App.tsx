@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
+import AlgoliaChatbot from "./components/AlgoliaChatbot";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import UgandaMap from "./pages/UgandaMap";
@@ -220,6 +221,8 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            {/* Global Atlas AI Chatbot */}
+            <AlgoliaChatbot />
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>

@@ -6,6 +6,7 @@ import { MapPin, Briefcase, BookOpen, Calendar, FileText, Users, TrendingUp, Glo
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Footer from "@/components/Footer";
+import AlgoliaSearch from "@/components/AlgoliaSearch";
 
 function StatCard({ stat, index, isInView }: { stat: any; index: number; isInView: boolean }) {
   const Icon = stat.icon;
@@ -87,7 +88,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
+      <section className="relative overflow-hidden py-8 md:py-12">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background pointer-events-none" />
         <div className="container relative">
           <motion.div
@@ -96,6 +97,11 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center space-y-8"
           >
+            {/* Glassmorphism Search Button - TOP POSITION */}
+            <div className="mb-16 mt-2">
+              <AlgoliaSearch />
+            </div>
+
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent font-['Space_Grotesk']">
                 Uganda's Tech Ecosystem
@@ -106,6 +112,7 @@ export default function Home() {
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               The open platform connecting communities, opportunities, and resources across Uganda's technology landscape. Built by the ecosystem, for the ecosystem.
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button asChild size="lg" className="text-lg px-8">
                 <Link href="/ecosystem">
