@@ -7,6 +7,12 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import infographicsRouter from "../routes/infographics.js";
+import blogImageRouter from "../routes/blog-image.js";
+import locationSearchRouter from "../routes/location-search.js";
+import aiResourceAgentRouter from "../routes/ai-resource-agent.js";
+import aiEventsAgentRouter from "../routes/ai-events-agent.js";
+import aiJobsAgentRouter from "../routes/ai-jobs-agent.js";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -35,6 +41,25 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Infographics API
+  app.use("/api/infographics", infographicsRouter);
+  
+  // Blog Image Generator API
+  app.use("/api/blog-image", blogImageRouter);
+  
+  // AI Location Search API
+  app.use("/api/location-search", locationSearchRouter);
+  
+  // AI Resource Agent API
+  app.use("/api/ai-resource-agent", aiResourceAgentRouter);
+  
+  // AI Events Agent API
+  app.use("/api/ai-events-agent", aiEventsAgentRouter);
+  
+  // AI Jobs Agent API
+  app.use("/api/ai-jobs-agent", aiJobsAgentRouter);
+  
   // tRPC API
   app.use(
     "/api/trpc",

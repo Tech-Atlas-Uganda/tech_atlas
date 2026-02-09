@@ -43,6 +43,7 @@ interface GitHubContributor {
 }
 
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { InfographicGenerator } from "@/components/InfographicGenerator";
 
 export default function Dashboard() {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
@@ -113,12 +114,17 @@ export default function Dashboard() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground font-['Space_Grotesk'] mb-2">
-            Uganda Tech Ecosystem
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Real-time insights into Uganda's technology landscape
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground font-['Space_Grotesk'] mb-2">
+                Uganda Tech Ecosystem
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Real-time insights into Uganda's technology landscape
+              </p>
+            </div>
+            <InfographicGenerator />
+          </div>
         </motion.div>
 
         {/* Ecosystem Stats */}

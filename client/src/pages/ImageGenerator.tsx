@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Palette, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, Palette, Sparkles, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 interface Template {
   name: string;
@@ -27,6 +29,9 @@ export default function ImageGenerator() {
   const [color1, setColor1] = useState("#3b82f6");
   const [color2, setColor2] = useState("#1e40af");
   const [style, setStyle] = useState<'gradient' | 'solid' | 'minimal'>('gradient');
+  const [generating, setGenerating] = useState(false);
+  const [aiImage, setAiImage] = useState<string | null>(null);
+  const [showAiDialog, setShowAiDialog] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const generateImage = () => {
@@ -98,6 +103,89 @@ export default function ImageGenerator() {
   const applyTemplate = (template: Template) => {
     setColor1(template.color1);
     setColor2(template.color2);
+  };
+
+  const generateWithAI = async () => {
+    if (!title.trim()) {
+      toast.error('Please enter a blog title first');
+      return;
+    }
+
+    setGenerating(true);
+    setAiImage(null);
+
+    try {
+      const response = await fetch('/api/blog-image/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        toast.error(data.message || 'Failed to generate');
+        throw new Error(data.message);
+      }
+
+      setAiImage(data.svg);
+      setShowAiDialog(true);
+      toast.success('Generated!');
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadAiImage = () => {
+    if (!aiImage) return;
+    const blob = new Blob([aiImage], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tech-atlas-blog-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded!');
+  };
+
+  const downloadAiImagePng = async () => {
+    if (!aiImage) return;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 630;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const img = new Image();
+      const svgBlob = new Blob([aiImage], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const pngUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = pngUrl;
+            a.download = `tech-atlas-blog-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(pngUrl);
+            toast.success('Downloaded!');
+          }
+        });
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    } catch (error) {
+      toast.error('Failed to convert');
+    }
   };
 
   // Generate initial image on mount and when values change
@@ -250,6 +338,25 @@ export default function ImageGenerator() {
                   placeholder="Enter blog post title..."
                   className="text-lg"
                 />
+                
+                <Button
+                  onClick={generateWithAI}
+                  disabled={generating}
+                  className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  size="lg"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Generating with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Generate with AI
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
@@ -284,6 +391,57 @@ export default function ImageGenerator() {
             </Card>
           </div>
         </div>
+
+        {/* AI Generated Image Dialog */}
+        <Dialog open={showAiDialog} onOpenChange={setShowAiDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-500" />
+                AI Generated Blog Image
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <Card className="bg-muted/30">
+                <CardContent className="p-6">
+                  <div 
+                    className="w-full bg-white rounded-lg shadow-xl overflow-hidden mx-auto"
+                    style={{ 
+                      width: '100%',
+                      maxWidth: '800px',
+                      aspectRatio: '1200/630'
+                    }}
+                  >
+                    <svg 
+                      viewBox="0 0 1200 630" 
+                      className="w-full h-full"
+                      dangerouslySetInnerHTML={{ __html: aiImage?.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '') || '' }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="text-center text-sm text-muted-foreground">
+                📐 Size: 1200x630px (optimized for social media)
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <Button onClick={downloadAiImagePng} size="lg" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  PNG
+                </Button>
+                <Button onClick={downloadAiImage} size="lg" variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  SVG
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => setShowAiDialog(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

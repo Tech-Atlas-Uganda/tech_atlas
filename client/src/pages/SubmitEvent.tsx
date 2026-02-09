@@ -279,8 +279,13 @@ export default function SubmitEvent() {
           console.error('❌ Upload error:', uploadError);
           toast.error(`Failed to upload image: ${uploadError.message}`);
           // Use default image instead
-          console.log('ℹ️ Generating and uploading default image...');
-          imageUrl = await generateAndUploadDefaultImage(submissionType);
+          console.log('ℹ️ Using default image...');
+          if (submissionType === 'opportunity') {
+            imageUrl = '/tech_atlas_opportunity.png'; // Local image from public folder
+            console.log('✅ Using local opportunity image:', imageUrl);
+          } else {
+            imageUrl = await generateAndUploadDefaultImage(submissionType);
+          }
         } else {
           // Get public URL
           const { data: { publicUrl } } = supabase.storage
@@ -295,22 +300,33 @@ export default function SubmitEvent() {
         console.error('❌ Image upload error:', error);
         toast.error(`Failed to upload image: ${error.message}`);
         // Use default image on error
-        console.log('ℹ️ Generating and uploading default image...');
+        console.log('ℹ️ Using default image...');
+        if (submissionType === 'opportunity') {
+          imageUrl = '/tech_atlas_opportunity.png'; // Local image from public folder
+          console.log('✅ Using local opportunity image:', imageUrl);
+        } else {
+          try {
+            imageUrl = await generateAndUploadDefaultImage(submissionType);
+          } catch (defaultError) {
+            console.error('❌ Failed to generate default image:', defaultError);
+            imageUrl = ""; // Empty string as final fallback
+          }
+        }
+      }
+    } else {
+      // Use local default image for opportunities (no upload needed)
+      console.log('ℹ️ No image provided, using local default image...');
+      if (submissionType === 'opportunity') {
+        imageUrl = '/tech_atlas_opportunity.png'; // Local image from public folder
+        console.log('✅ Using local opportunity image:', imageUrl);
+      } else {
+        // For events, generate and upload
         try {
           imageUrl = await generateAndUploadDefaultImage(submissionType);
         } catch (defaultError) {
           console.error('❌ Failed to generate default image:', defaultError);
           imageUrl = ""; // Empty string as final fallback
         }
-      }
-    } else {
-      // Generate and upload default Tech Atlas branded image
-      console.log('ℹ️ No image provided, generating and uploading default image...');
-      try {
-        imageUrl = await generateAndUploadDefaultImage(submissionType);
-      } catch (defaultError) {
-        console.error('❌ Failed to generate default image:', defaultError);
-        imageUrl = ""; // Empty string as final fallback
       }
     }
 

@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { CORE_CATEGORIES } from "../../../shared/const";
 import { BookOpen, Search, Plus, ExternalLink, Award, Clock, User, DollarSign, Tag, Star, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AIResourceAgent } from "@/components/AIResourceAgent";
 
 export default function Learning() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -312,6 +313,16 @@ export default function Learning() {
               </SelectContent>
             </Select>
           </div>
+        </motion.div>
+
+        {/* AI Resource Agent */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <AIResourceAgent />
         </motion.div>
 
         {/* Resources Grid */}

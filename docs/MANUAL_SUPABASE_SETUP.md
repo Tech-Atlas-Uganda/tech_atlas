@@ -34,7 +34,7 @@ After running the script, you should see:
 
 1. Update your `.env` file with the correct connection string:
    ```env
-   DATABASE_URL=postgresql://postgres:mxO1g6xlrBX5KGlb@db.opjxkfzofuqzijkvinzd.supabase.co:5432/postgres
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_PROJECT.supabase.co:5432/postgres
    ```
 
 2. Start the development server:

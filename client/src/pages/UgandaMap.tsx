@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { MapView, MapUtils } from "@/components/Map";
 import OpenStreetMap from "@/components/OpenStreetMap";
 import UgandaMapComponent from "@/components/UgandaMapComponent";
+import { AILocationSearch } from "@/components/AILocationSearch";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Users, Rocket, Map } from "lucide-react";
 
@@ -293,7 +294,7 @@ export default function UgandaMap() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-6"
+          className="mb-6 grid md:grid-cols-2 gap-6"
         >
           <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
             <CardContent className="p-4">
@@ -332,6 +333,15 @@ export default function UgandaMap() {
               </div>
             </CardContent>
           </Card>
+
+          <AILocationSearch 
+            onLocationFound={(lat, lng) => {
+              if (mapRef.current) {
+                mapRef.current.setCenter({ lat, lng });
+                mapRef.current.setZoom(12);
+              }
+            }}
+          />
         </motion.div>
 
         {/* Map */}

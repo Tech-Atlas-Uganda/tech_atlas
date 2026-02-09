@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { trpc } from "@/lib/trpc";
 import { Briefcase, DollarSign, MapPin, Clock, Search, Plus, Building, Calendar, ExternalLink, Mail, Globe, Users, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AIJobsAgent } from "@/components/AIJobsAgent";
 
 export default function Jobs() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -395,6 +396,16 @@ export default function Jobs() {
               </SelectContent>
             </Select>
           </div>
+        </motion.div>
+
+        {/* AI Jobs Agent */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <AIJobsAgent />
         </motion.div>
 
         {/* Tabs */}

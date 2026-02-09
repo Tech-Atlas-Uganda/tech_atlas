@@ -49,7 +49,7 @@ The newsletter subscription form is now available in the footer of all pages (ex
 
 A secure JWT secret has been generated and added to your `.env` file:
 ```
-JWT_SECRET=a7f8d9e2b4c6f1a3e5d7b9c2f4e6a8d0b3c5e7f9a1d3e5b7c9f1a3e5d7b9c2f4e6a8d0b3c5e7f9a1d3e5b7c9f1a3e5d7
+JWT_SECRET=your_generated_jwt_secret_here
 ```
 
 ## Fixed Routing Issues

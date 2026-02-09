@@ -28,6 +28,7 @@ import SubmitEvent from "./pages/SubmitEvent";
 import SubmitResource from "./pages/SubmitResource";
 import SubmitBlog from "./pages/SubmitBlog";
 import ImageGenerator from "./pages/ImageGenerator";
+import GenerateOpportunityImage from "./pages/GenerateOpportunityImage";
 import ProfileSettings from "./pages/ProfileSettings";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
@@ -132,6 +133,10 @@ function Router() {
           </Route>
           <Route path="/tools/image-generator">
             <ImageGenerator />
+            <Footer />
+          </Route>
+          <Route path="/tools/generate-opportunity-image">
+            <GenerateOpportunityImage />
             <Footer />
           </Route>
           <Route path="/profile/settings">

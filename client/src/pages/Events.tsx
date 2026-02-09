@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { Calendar as CalendarIcon, DollarSign, MapPin, Clock, Search, Plus, Video, Users, Award, ExternalLink, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { AIEventsAgent } from "@/components/AIEventsAgent";
 
 export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,7 +20,7 @@ export default function Events() {
   const [opportunityTypeFilter, setOpportunityTypeFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("upcoming");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const { data: events, isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery({ status: "approved" });
@@ -36,13 +37,22 @@ export default function Events() {
   useEffect(() => {
     console.log('📊 Events data updated:', events?.length || 0, 'events');
     console.log('📊 Opportunities data updated:', opportunities?.length || 0, 'opportunities');
+    console.log('📊 All events:', events);
+    console.log('📊 Status filter:', statusFilter);
+    
     if (events && events.length > 0) {
       console.log('📅 Sample event:', events[0]);
+      // Check how many are upcoming vs past
+      const now = new Date();
+      const upcoming = events.filter(e => e.startDate && new Date(e.startDate) > now);
+      const past = events.filter(e => e.startDate && new Date(e.startDate) <= now);
+      console.log('📅 Upcoming events:', upcoming.length);
+      console.log('📅 Past events:', past.length);
     }
     if (opportunities && opportunities.length > 0) {
       console.log('🎯 Sample opportunity:', opportunities[0]);
     }
-  }, [events, opportunities]);
+  }, [events, opportunities, statusFilter]);
 
   // Combine events and opportunities into one list
   const allItems = [
@@ -152,12 +162,12 @@ export default function Events() {
     setOpportunityTypeFilter("all");
     setCategoryFilter("all");
     setLocationFilter("all");
-    setStatusFilter("upcoming");
+    setStatusFilter("all");
   };
 
   // Check if any filters are active
   const hasActiveFilters = searchQuery || eventTypeFilter !== "all" || opportunityTypeFilter !== "all" || 
-    categoryFilter !== "all" || locationFilter !== "all" || statusFilter !== "upcoming";
+    categoryFilter !== "all" || locationFilter !== "all" || statusFilter !== "all";
 
   const formatDate = (date: Date | string) => {
     // Handle both ISO strings and Date objects
@@ -482,6 +492,15 @@ export default function Events() {
               </Dialog>
             </div>
           </div>
+
+          {/* AI Events Agent */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <AIEventsAgent />
+          </motion.div>
 
           {/* Filters */}
           <div className="space-y-4">
