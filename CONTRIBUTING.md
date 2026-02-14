@@ -6,7 +6,7 @@
 
 We're building Uganda's tech ecosystem infrastructure together, and we welcome contributions from developers, designers, content creators, and community members of all skill levels.
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-aifestug.com-blue?style=flat-square)](https://aifestug.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-techatlasug.com-blue?style=flat-square)](https://techatlasug.com)
 [![Email](https://img.shields.io/badge/📧_Contact-ronlinx6@gmail.com-green?style=flat-square)](mailto:ronlinx6@gmail.com)
 
 </div>
@@ -455,7 +455,7 @@ git push origin --delete feature/your-feature-name
 | 🐛 **GitHub Issues** | Bug reports, feature requests |
 | 💬 **GitHub Discussions** | General questions, ideas |
 | 📧 **Email** | ronlinx6@gmail.com - Private inquiries |
-| 🌐 **Live Demo** | [aifestug.com](https://aifestug.com) |
+| 🌐 **Live Demo** | [techatlasug.com](https://techatlasug.com) |
 
 ### Reporting Bugs
 
@@ -540,7 +540,7 @@ All contributors are valued and recognized!
 
 - 💬 GitHub Discussions for public questions
 - 📧 Email for private inquiries
-- 🌐 Visit [aifestug.com](https://aifestug.com)
+- 🌐 Visit [techatlasug.com](https://techatlasug.com)
 
 ---
 
